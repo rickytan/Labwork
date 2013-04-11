@@ -27,9 +27,9 @@
 #define RtoD(v) (180.0*(v)/M_PI)
 #define DtoR(v) (M_PI*(v)/180.0)
 
-#define ZNEAR 0.1
-#define ZFAR 8.0
-#define FOVY 45.0
+static float ZNEAR = 0.1;
+static float ZFAR = 8.0;
+static float FOVY = 45.0;
 
 
 //#define MODEL_FILE_PATH "../media/models/Aircraft.obj"
@@ -47,7 +47,9 @@ int _dbgImageHeight = 512;
 int _windowWidth = 1024;
 int _windowHeight = 768;
 
-int _numOfPeelings = 0;
+int _numOfPasses = 0;
+
+int _windowId[2] = {0};
 
 int g_rotating = 0;
 int g_panning = 0;
@@ -58,6 +60,8 @@ float g_bbScale = 1.0;
 nv::vec3f g_bbTrans(0.0, 0.0, 0.0);
 nv::vec2f g_rot(0.0, 0.0);
 nv::vec3f g_pos(0.0, 0.0, 4.0);
+
+nv::vec3f g_up(0.0, 0.0, 4.0);
 
 
 GLSLProgramObject g_shaderFrontInit;
@@ -72,8 +76,21 @@ GLuint g_frontColorTexId[2];
 GLuint g_frontColorBlenderTexId;
 GLuint g_frontColorBlenderFboId;
 
+#define SAMPLE_ROWS 48
+#define SAMPLE_COLS 64
+static GLfloat m_aLines[3*2*SAMPLE_COLS*SAMPLE_ROWS] = {0};
+
+const GLint m_nBuffers = 1;
+GLfloat *m_pBufferData = NULL;
+
+GLint *m_pIndices = NULL;
+
+GLuint m_vertexBufferId[m_nBuffers];
+
+const GLint  m_nAttachs = 2;
+
 GLuint g_frontDepthDiffFBOId;
-GLuint g_frontDepthDiffColorTexId;
+GLuint m_colorAttachTexId[m_nAttachs];
 GLuint g_frontDepthDiffDepthTexId;
 
 
@@ -106,12 +123,36 @@ void deleteModel()
 	glDeleteLists(g_modelDisplayList, 1);
 }
 
+
+GLfloat* createBuffer()
+{
+	m_pIndices = (GLint*)malloc(sizeof(GLint)*_windowWidth*_windowHeight);
+	for (int i=0; i<_windowHeight*_windowWidth;i++)
+	{
+		m_pIndices[i] = i;
+	}
+
+	GLfloat *b = (GLfloat*)malloc(sizeof(GLfloat) * _windowHeight * _windowWidth * 3);
+	return b;
+}
+
+void deleteBuffer(GLfloat *buffer)
+{
+	free(m_pIndices), m_pIndices = NULL;
+	free(buffer);
+}
+
 void DrawModel()
 {
 	if (_model)
 		glCallList(g_modelDisplayList);
 	else
 		glutSolidTeapot(1.f);
+}
+
+void DrawDepthLines()
+{
+
 }
 
 void InitFrontPeelingRenderTargets()
@@ -145,15 +186,6 @@ void InitFrontPeelingRenderTargets()
 								  GL_TEXTURE_RECTANGLE_ARB, g_frontColorTexId[i], 0);
 	}
 
-	glGenTextures(1,&g_frontDepthDiffColorTexId);
-	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, g_frontDepthDiffColorTexId);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, _windowWidth, _windowHeight,
-		0, GL_RGBA, GL_FLOAT, 0);
-
 	glGenTextures(1,&g_frontDepthDiffDepthTexId);
 	glBindTexture(GL_TEXTURE_RECTANGLE_EXT, g_frontDepthDiffDepthTexId);
 	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -162,12 +194,21 @@ void InitFrontPeelingRenderTargets()
 	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D,0, GL_DEPTH_COMPONENT32F_NV, _windowWidth, _windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
+	glGenTextures(m_nAttachs,m_colorAttachTexId);
 	glGenFramebuffersEXT(1, &g_frontDepthDiffFBOId);
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_frontDepthDiffFBOId);
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
-		GL_TEXTURE_RECTANGLE_ARB, g_frontDepthDiffColorTexId, 0);
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT1_EXT,
-		GL_TEXTURE_RECTANGLE_ARB, g_frontDepthDiffColorTexId, 0);
+	for (GLint i=0; i < m_nAttachs; ++i)
+	{	
+		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, m_colorAttachTexId[i]);
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB32F_ARB, _windowWidth, _windowHeight, 0, GL_RGBA, GL_FLOAT, 0);
+		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + i,
+			GL_TEXTURE_RECTANGLE_ARB, m_colorAttachTexId[i], 0);
+	}
+
 	//glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
 	//	GL_TEXTURE_RECTANGLE_ARB, g_frontDepthDiffDepthTexId, 0);
 }
@@ -178,11 +219,11 @@ void DeleteFrontPeelingRenderTargets()
 	glDeleteTextures(2, g_frontDepthTexId);
 	glDeleteTextures(2, g_frontColorTexId);
 	glDeleteFramebuffersEXT(1, &g_frontDepthDiffFBOId);
-	glDeleteTextures(1, &g_frontDepthDiffColorTexId);
+	glDeleteTextures(m_nAttachs, m_colorAttachTexId);
 	glDeleteTextures(1, &g_frontDepthDiffDepthTexId);
 }
 
-void RenderFrontToBackPeeling()
+void DoPeeling()
 {
 	g_frontColorBlenderFboId = g_frontFboId[0];
 	g_frontColorBlenderTexId = g_frontColorTexId[0];
@@ -212,10 +253,13 @@ void RenderFrontToBackPeeling()
 	cvFlip(_debugDepthImage,_debugDepthImage,0);
 	cvShowImage("Depth Window",_debugDepthImage);
 
-	for (int layer = 0; layer < _numOfPeelings; layer++) {
+	for (int layer = 0; layer < _numOfPasses; layer++) {
 		int currId = (layer + 1) % 2;
 		int prevId = 1 - currId;
 
+		/********************************************************************
+
+		 ********************************************************************/
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_frontFboId[currId]);
 		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 
@@ -234,9 +278,12 @@ void RenderFrontToBackPeeling()
 		DrawModel();
 		g_shaderFrontPeel.unbind();
 
+		/********************************************************************
+
+		 ********************************************************************/
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,g_frontDepthDiffFBOId);
 		GLenum att[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT};
-		glDrawBuffers(2, att);
+		glDrawBuffers(1, att);
 
 		glClearColor(0, 0, 0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT );
@@ -245,6 +292,10 @@ void RenderFrontToBackPeeling()
 		g_shaderFrontSubDepth.bind();
 		g_shaderFrontSubDepth.bindTextureRECT("lastDepth",g_frontDepthTexId[prevId],0);
 		g_shaderFrontSubDepth.bindTextureRECT("currentDepth",g_frontDepthTexId[currId],1);
+		g_shaderFrontSubDepth.setUniform("zNear", &ZNEAR, 1);
+		g_shaderFrontSubDepth.setUniform("zFar", &ZFAR, 1);
+		static GLfloat height = 0.0f;
+		g_shaderFrontSubDepth.setUniform("roleHeight", &height, 1);
 		glCallList(g_quadDisplayList);
 		g_shaderFrontSubDepth.unbind();
 
@@ -252,6 +303,22 @@ void RenderFrontToBackPeeling()
 		glReadPixels(0,0,_dbgImageWidth,_dbgImageHeight,GL_BGR,GL_UNSIGNED_BYTE,_debugImage->imageData);
 		cvFlip(_debugImage,_debugImage,0);
 		cvShowImage("Depth Diff Window",_debugImage);
+
+		glReadPixels(0,0,_windowWidth,_windowHeight,GL_RGB,GL_FLOAT,m_pBufferData);
+		/*
+		int stridex = _windowWidth / SAMPLE_COLS;
+		int stridey = _windowHeight / SAMPLE_ROWS;
+		for (int i=0; i < SAMPLE_ROWS; ++i)
+		{
+			for (int j=0; j < SAMPLE_COLS; ++j)
+			{
+				float *data = m_pBufferData + _windowWidth * stridey * i + stridex * j;
+				m_aLines[i*3*2 + 0] = data[0];
+				m_aLines[i*3*2 + 1] = data[1];
+				m_aLines[i*3*2 + 2] = data[2];
+			}
+		}
+		 */
 
 		g_frontColorBlenderTexId = g_frontColorTexId[currId];
 		g_frontColorBlenderFboId = g_frontFboId[currId];
@@ -357,19 +424,57 @@ void display()
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	//glutSetWindow(_windowId[0]);
+
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	
+	gluLookAt(g_up.x, g_up.y, g_up.z, g_up.x, g_up.y, 0, 0, 1, 0);
+	
+	/*gluLookAt(g_pos.x, g_pos.y, g_pos.z, g_pos.x, g_pos.y, 0, 0, 1, 0);
+
+	glRotatef(g_rot.x, 1, 0, 0);
+	glRotatef(g_rot.y, 0, 1, 0);
+	glTranslatef(g_bbTrans.x, g_bbTrans.y, g_bbTrans.z);*/
+	glScalef(g_bbScale, g_bbScale, g_bbScale);
+	
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	GLfloat ratio = g_bbScale * _windowWidth / _windowHeight;
+	glOrtho(-ratio, ratio, -g_bbScale, g_bbScale, -1.0, ZFAR);
+	glMatrixMode(GL_MODELVIEW);
+
+	//glColor3b(0xff,0x7f,0xff);
+	//glCallList(g_quadDisplayList);
+	DoPeeling();
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+
+	glutSetWindow(_windowId[1]);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
 	gluLookAt(g_pos.x, g_pos.y, g_pos.z, g_pos.x, g_pos.y, 0, 0, 1, 0);
+	//glTranslatef(0, 0, -5);
 
 	glRotatef(g_rot.x, 1, 0, 0);
 	glRotatef(g_rot.y, 0, 1, 0);
 	glTranslatef(g_bbTrans.x, g_bbTrans.y, g_bbTrans.z);
 	glScalef(g_bbScale, g_bbScale, g_bbScale);
 
-	//glColor3b(0xff,0x7f,0xff);
-	//glCallList(g_quadDisplayList);
-	RenderFrontToBackPeeling();
+	glColor3f(1.0, 1.0, 1.0);
+	glutWireCube(1.0);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+
+	glVertexPointer(3, GL_FLOAT, 0, m_pBufferData);;
+	glColor3f(1.0, 0.0, 0.0);
+	glDrawElements(GL_POINTS, _windowWidth*_windowHeight, GL_UNSIGNED_INT, m_pIndices);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
 
 	glutSwapBuffers();
 }
@@ -377,7 +482,7 @@ void display()
 
 void idle()
 {
-	//glutPostRedisplay();
+	glutPostRedisplay();
 }
 
 
@@ -388,7 +493,8 @@ void reshape(int w, int h)
 		_windowHeight = h;
 		DeleteFrontPeelingRenderTargets();
 		InitFrontPeelingRenderTargets();
-		
+		deleteBuffer(m_pBufferData);
+		m_pBufferData = createBuffer();
 	}
 	
 	glMatrixMode(GL_PROJECTION);
@@ -411,12 +517,12 @@ void keyboardFunc(unsigned char key, int x, int y)
 	{
 	case '+':
 	case '=':
-		_numOfPeelings++;
+		_numOfPasses++;
 		break;
 	case '-':
 	case '_':
-		if (_numOfPeelings > 0)
-			_numOfPeelings--;
+		if (_numOfPasses > 0)
+			_numOfPasses--;
 		break;
 	case 27:
 		exit(0);
@@ -478,12 +584,19 @@ void mouseFunc(int button, int state, int x, int y)
 	}
 }
 
+
+
+
 int main(int argc, char* argv[])
 {
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	glutInitWindowSize(_windowWidth, _windowHeight);
 	glutInit(&argc, argv);
-	glutCreateWindow("Depth Peeling");
+	_windowId[0] = glutCreateWindow("Depth Peeling");
+
+	//glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
+	//glutInitWindowSize(_windowWidth, _windowHeight);
+	//_windowId[1] = glutCreateWindow("Show");
 
 	if (glewInit() != GLEW_OK)
 	{
@@ -509,6 +622,7 @@ int main(int argc, char* argv[])
 	}
 
 	initGL();
+	m_pBufferData = createBuffer();
 
 	_debugImage = cvCreateImage(cvSize(_dbgImageWidth,_dbgImageHeight),8,3);
 	_debugDepthImage = cvCreateImage(cvSize(_dbgImageWidth,_dbgImageHeight),8,1);
@@ -518,7 +632,7 @@ int main(int argc, char* argv[])
 	glutKeyboardFunc(keyboardFunc);
 	glutMouseFunc(mouseFunc);
 	glutMotionFunc(motionFunc);
-	glutTimerFunc(1000.0/60,timerFunc,0);
+	//glutTimerFunc(1000.0/60,timerFunc,0);
 	glutIdleFunc(idle);
 
 	glutMainLoop();
@@ -526,6 +640,8 @@ int main(int argc, char* argv[])
 	cvReleaseImage(&_debugImage);
 	cvReleaseImage(&_debugDepthImage);
 	cvDestroyAllWindows();
+
+	deleteBuffer(m_pBufferData);
 
 	return 0;
 }

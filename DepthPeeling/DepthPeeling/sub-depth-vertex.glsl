@@ -4,8 +4,12 @@ vec3 ShadeVertex()
 	return vec3(gl_Vertex.xy, diffuse);
 }
 
+varying vec4 vertex;
+
 void main(void)
 {
 	gl_Position = ftransform();
 	gl_TexCoord[0].xyz = ShadeVertex();
+
+	vertex = gl_Vertex;
 }
