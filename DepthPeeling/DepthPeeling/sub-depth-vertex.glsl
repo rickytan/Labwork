@@ -11,5 +11,5 @@ void main(void)
 	gl_Position = ftransform();
 	gl_TexCoord[0].xyz = ShadeVertex();
 
-	vertex = gl_Vertex;
+	vertex = gl_Position;
 }

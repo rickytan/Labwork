@@ -27,7 +27,10 @@
 #define RtoD(v) (180.0*(v)/M_PI)
 #define DtoR(v) (M_PI*(v)/180.0)
 
-static float ZNEAR = 0.1;
+#define GetVertexValue(__buffer, __width, __row, __col) (__buffer[((3*__width)*(__row) + 3*(__col))])
+#define GetVertexIndex(__width, __row, __col) ((3*__width)*(__row) + (__col))
+
+static float ZNEAR = 2.0;
 static float ZFAR = 8.0;
 static float FOVY = 45.0;
 
@@ -44,8 +47,8 @@ IplImage *_debugDepthImage = NULL;
 int _dbgImageWidth = 512;
 int _dbgImageHeight = 512;
 
-int _windowWidth = 1024;
-int _windowHeight = 768;
+unsigned int _windowWidth = 1024;
+unsigned int _windowHeight = 768;
 
 int _numOfPasses = 0;
 
@@ -56,12 +59,12 @@ int g_panning = 0;
 int g_scaling = 0;
 int g_oldX, g_oldY;
 int g_newX, g_newY;
-float g_bbScale = 1.0;
+float g_fPeelingScale = 1.0;
 nv::vec3f g_bbTrans(0.0, 0.0, 0.0);
 nv::vec2f g_rot(0.0, 0.0);
 nv::vec3f g_pos(0.0, 0.0, 4.0);
 
-nv::vec3f g_up(0.0, 0.0, 4.0);
+nv::vec3f g_up(0.0, -4.0, 0.0);
 
 
 GLSLProgramObject g_shaderFrontInit;
@@ -83,7 +86,8 @@ static GLfloat m_aLines[3*2*SAMPLE_COLS*SAMPLE_ROWS] = {0};
 const GLint m_nBuffers = 1;
 GLfloat *m_pBufferData = NULL;
 
-GLint *m_pIndices = NULL;
+GLuint *m_pIndices = NULL;
+GLuint m_nIndices = 0;
 
 GLuint m_vertexBufferId[m_nBuffers];
 
@@ -111,7 +115,12 @@ void LoadModel(char path[])
 	}
 	GLfloat dim[3] = {0};
 	glmDimensions(_model, dim);
-	g_bbScale = 3.f / max(dim[0], max(dim[1], dim[2]));
+	float r = sqrtf(dim[0]*dim[0] + dim[1]*dim[1] + dim[2]*dim[2]) / 2;
+	float l = sqrtf(g_up.x * g_up.x + g_up.y * g_up.y + g_up.z * g_up.z);
+	float r_max = l * sinf(FOVY*M_PI/360);
+	g_fPeelingScale = r_max / r;
+	//ZNEAR = l - 1.5 * r;
+	//ZFAR = l + 1.5 * r;
 	
 	g_modelDisplayList = glmList(_model, GLM_SMOOTH);
 }
@@ -126,13 +135,14 @@ void deleteModel()
 
 GLfloat* createBuffer()
 {
-	m_pIndices = (GLint*)malloc(sizeof(GLint)*_windowWidth*_windowHeight);
-	for (int i=0; i<_windowHeight*_windowWidth;i++)
-	{
-		m_pIndices[i] = i;
-	}
-
-	GLfloat *b = (GLfloat*)malloc(sizeof(GLfloat) * _windowHeight * _windowWidth * 3);
+	m_pIndices = (GLuint*)malloc(sizeof(GLuint)*_windowWidth*_windowHeight*6);
+	//for (int i=0; i<_windowHeight*_windowWidth;i++)
+	//{
+	//	m_pIndices[i] = i;
+	//}
+	unsigned int size = sizeof(GLfloat) * _windowHeight * _windowWidth * 3;
+	GLfloat *b = (GLfloat*)malloc(size);
+	memset(b,0,size);
 	return b;
 }
 
@@ -237,7 +247,7 @@ void DoPeeling()
 	glEnable(GL_DEPTH_TEST);	// 注意这里开启了深度测试，只有最表层画了出来
 
 	g_shaderFrontInit.bind();
-	g_shaderFrontInit.setUniform("scale",&g_bbScale,1);
+	g_shaderFrontInit.setUniform("scale",&g_fPeelingScale,1);
 	DrawModel();	// 画出原始模型，按长度30加上绿色条纹，并将深度值保存在了
 					// 帧缓存 g_frontDepthTexId[0] 中。所以下面循环开始时，
 					// 表示深度的纹理已经有初始值了。
@@ -274,7 +284,7 @@ void DoPeeling()
 		g_shaderFrontPeel.bind();	// 这段着色程序中，将比当前最外层还近或相等的片断直接去掉了，
 									// 因为当前只画第 N 层，而不是最表层了。
 		g_shaderFrontPeel.bindTextureRECT("DepthTex", g_frontDepthTexId[prevId], 0);
-		g_shaderFrontPeel.setUniform("scale", &g_bbScale, 1);
+		g_shaderFrontPeel.setUniform("scale", &g_fPeelingScale, 1);
 		DrawModel();
 		g_shaderFrontPeel.unbind();
 
@@ -294,6 +304,7 @@ void DoPeeling()
 		g_shaderFrontSubDepth.bindTextureRECT("currentDepth",g_frontDepthTexId[currId],1);
 		g_shaderFrontSubDepth.setUniform("zNear", &ZNEAR, 1);
 		g_shaderFrontSubDepth.setUniform("zFar", &ZFAR, 1);
+		//g_shaderFrontSubDepth.setUniform("zDist", &g_pos.z, 1);
 		static GLfloat height = 0.0f;
 		g_shaderFrontSubDepth.setUniform("roleHeight", &height, 1);
 		glCallList(g_quadDisplayList);
@@ -305,6 +316,73 @@ void DoPeeling()
 		cvShowImage("Depth Diff Window",_debugImage);
 
 		glReadPixels(0,0,_windowWidth,_windowHeight,GL_RGB,GL_FLOAT,m_pBufferData);
+		
+		m_nIndices = 0;
+		for (unsigned int row=1; row<_windowHeight - 1; ++row)
+		{
+			for (unsigned int col=1; col<_windowWidth - 1; ++col)
+			{
+				typedef struct {
+					GLfloat x,y,z;
+				} _Pos;
+
+				_Pos *p0 = (_Pos *)&GetVertexValue(m_pBufferData, _windowWidth, row - 1, col);
+				_Pos *p1 = (_Pos *)&GetVertexValue(m_pBufferData, _windowWidth, row + 0, col);
+				_Pos *p2 = (_Pos *)&GetVertexValue(m_pBufferData, _windowWidth, row + 1, col);
+				_Pos *tmp[3] = {p0, p1, p2};
+				_Pos **vertexs = tmp + 1;
+				
+				static GLfloat threshold = 0.9 * (ZNEAR - ZFAR) / 2.0;
+
+				for (int i=-1; i <= 1; i++)
+				{
+					for (int j=-1; j <= 1; j++)
+					{
+						if (i == 0 && j == 0) continue;
+						else if (vertexs[i][j].z < threshold)
+							continue;
+					}
+				}
+				
+				unsigned int flag = 0;
+				flag |= vertexs[0][0].z < threshold?0x1:0;
+				flag |= vertexs[0][1].z < threshold?0x2:0;
+				flag |= vertexs[1][0].z < threshold?0x4:0;
+				flag |= vertexs[1][1].z < threshold?0x8:0;
+
+				if (flag == 0x0) {
+					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
+					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col + 1;
+
+					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col + 1;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col + 1;
+				}
+				else if (flag == 0x1) {
+					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col + 1;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col + 1;
+				}
+				else if (flag == 0x2) {
+					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col + 1;
+				}
+				else if (flag == 0x4) {
+					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col + 1;
+					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col + 1;
+				}
+				else if (flag == 0x8) {
+					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
+					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col + 1;
+				}
+			}
+		}
+		
+		
 		/*
 		int stridex = _windowWidth / SAMPLE_COLS;
 		int stridey = _windowHeight / SAMPLE_ROWS;
@@ -417,42 +495,45 @@ void initGL()
 
 
 
-void display()
+void displayPeelingView()
 {
+	glutSetWindow(_windowId[0]);
 	//static double s_t0 = currentSeconds();
 	glClearColor(0,0,0,0);
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//glutSetWindow(_windowId[0]);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	
-	gluLookAt(g_up.x, g_up.y, g_up.z, g_up.x, g_up.y, 0, 0, 1, 0);
-	
-	/*gluLookAt(g_pos.x, g_pos.y, g_pos.z, g_pos.x, g_pos.y, 0, 0, 1, 0);
-
-	glRotatef(g_rot.x, 1, 0, 0);
-	glRotatef(g_rot.y, 0, 1, 0);
-	glTranslatef(g_bbTrans.x, g_bbTrans.y, g_bbTrans.z);*/
-	glScalef(g_bbScale, g_bbScale, g_bbScale);
-	
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
-	GLfloat ratio = g_bbScale * _windowWidth / _windowHeight;
-	glOrtho(-ratio, ratio, -g_bbScale, g_bbScale, -1.0, ZFAR);
+
+	GLfloat ratio = g_fPeelingScale * _windowWidth / _windowHeight;
+	glOrtho(-ratio, ratio, -g_fPeelingScale, g_fPeelingScale, ZNEAR, ZFAR);
+
 	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	
+	gluLookAt(g_up.x, g_up.y, g_up.z, 0, 0, 0, 0, 0, 1);
+	
+	glScalef(g_fPeelingScale*2, g_fPeelingScale*2, g_fPeelingScale*2);
 
-	//glColor3b(0xff,0x7f,0xff);
-	//glCallList(g_quadDisplayList);
 	DoPeeling();
-
+	
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 
+	glutSwapBuffers();
+}
+
+void displayCameraView()
+{
 	glutSetWindow(_windowId[1]);
+	//static double s_t0 = currentSeconds();
+	glClearColor(0,0,0,0);
+	glClearDepth(1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -463,7 +544,13 @@ void display()
 	glRotatef(g_rot.x, 1, 0, 0);
 	glRotatef(g_rot.y, 0, 1, 0);
 	glTranslatef(g_bbTrans.x, g_bbTrans.y, g_bbTrans.z);
-	glScalef(g_bbScale, g_bbScale, g_bbScale);
+
+	float r = ZFAR - ZNEAR;
+	float l = sqrtf(g_up.x * g_up.x + g_up.y * g_up.y + g_up.z * g_up.z);
+	float r_max = l * sinf(FOVY*M_PI/360);
+    float g_fCameraScale = r_max / r * 2;
+
+	glScalef(g_fCameraScale, g_fCameraScale, g_fCameraScale);
 
 	glColor3f(1.0, 1.0, 1.0);
 	glutWireCube(1.0);
@@ -472,22 +559,23 @@ void display()
 
 	glVertexPointer(3, GL_FLOAT, 0, m_pBufferData);;
 	glColor3f(1.0, 0.0, 0.0);
-	glDrawElements(GL_POINTS, _windowWidth*_windowHeight, GL_UNSIGNED_INT, m_pIndices);
+	glDrawElements(GL_TRIANGLES, m_nIndices, GL_UNSIGNED_INT, m_pIndices);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 
 	glutSwapBuffers();
 }
 
-
 void idle()
 {
+	glutSetWindow(_windowId[1]);
 	glutPostRedisplay();
 }
 
 
 void reshape(int w, int h)
 {
+	
 	if (_windowWidth != w || _windowHeight != h) {
 		_windowWidth = w;
 		_windowHeight = h;
@@ -496,18 +584,24 @@ void reshape(int w, int h)
 		deleteBuffer(m_pBufferData);
 		m_pBufferData = createBuffer();
 	}
-	
+
+	int window = glutGetWindow();
+	if (window == _windowId[0]) {
+		glutSetWindow(_windowId[1]);
+		glutReshapeWindow(_windowWidth, _windowHeight);
+	}
+	else {
+		glutSetWindow(_windowId[0]);
+		glutReshapeWindow(_windowWidth, _windowHeight);
+	}
+
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	//gluOrtho2D(-0,1,-0,1);
-	//glOrtho(-1.0*_windowWidth/_windowHeight,1.0*_windowWidth/_windowHeight,-1.0,1.0,1,50);
 
-	gluPerspective(FOVY, (float)_windowWidth/(float)_windowHeight, ZNEAR, ZFAR);
-
+	gluPerspective(FOVY, (float)_windowWidth/(float)_windowHeight, 0.02, 50);
 
 	glMatrixMode(GL_MODELVIEW);
 	glViewport(0, 0, _windowWidth, _windowHeight);
-
 }
 
 void keyboardFunc(unsigned char key, int x, int y)
@@ -515,19 +609,28 @@ void keyboardFunc(unsigned char key, int x, int y)
 	key = (unsigned char)tolower(key);
 	switch(key)
 	{
-	case '+':
-	case '=':
+	case '+':case '=':
 		_numOfPasses++;
+		glutSetWindow(_windowId[0]);
+		glutPostRedisplay();
 		break;
-	case '-':
-	case '_':
-		if (_numOfPasses > 0)
+	case '-':case '_':
+		if (_numOfPasses > 0) {
 			_numOfPasses--;
+			glutSetWindow(_windowId[0]);
+			glutPostRedisplay();
+		}
 		break;
+	case 'r':case 'R':
+		g_pos = nv::vec3f(0,0,4);
+		g_rot = nv::vec2f(0,0);
+		g_bbTrans = nv::vec3f(0,0,0);
+		break;;
 	case 27:
 		exit(0);
 		break;
 	}
+	glutSetWindow(_windowId[1]);
 	glutPostRedisplay();
 }
 
@@ -585,14 +688,14 @@ void mouseFunc(int button, int state, int x, int y)
 }
 
 
-
-
 int main(int argc, char* argv[])
 {
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	glutInitWindowSize(_windowWidth, _windowHeight);
 	glutInit(&argc, argv);
-	_windowId[0] = glutCreateWindow("Depth Peeling");
+	_windowId[0] = glutCreateWindow("Peeling View");
+	glutDisplayFunc(displayPeelingView);
+	glutReshapeFunc(reshape);
 
 	//glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	//glutInitWindowSize(_windowWidth, _windowHeight);
@@ -627,7 +730,12 @@ int main(int argc, char* argv[])
 	_debugImage = cvCreateImage(cvSize(_dbgImageWidth,_dbgImageHeight),8,3);
 	_debugDepthImage = cvCreateImage(cvSize(_dbgImageWidth,_dbgImageHeight),8,1);
 
-	glutDisplayFunc(display);
+	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
+	glutInitWindowSize(_windowWidth, _windowHeight);
+	glutInit(&argc, argv);
+	_windowId[1] = glutCreateWindow("Camera View");
+
+	glutDisplayFunc(displayCameraView);
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(keyboardFunc);
 	glutMouseFunc(mouseFunc);
