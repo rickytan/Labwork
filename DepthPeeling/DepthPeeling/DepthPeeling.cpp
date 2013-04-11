@@ -27,6 +27,8 @@
 #define RtoD(v) (180.0*(v)/M_PI)
 #define DtoR(v) (M_PI*(v)/180.0)
 
+#define T(x) (model->triangles[(x)])
+
 #define GetVertexValue(__buffer, __width, __row, __col) (__buffer[((3*__width)*(__row) + 3*(__col))])
 #define GetVertexIndex(__width, __row, __col) ((3*__width)*(__row) + (__col))
 
@@ -54,6 +56,7 @@ int _numOfPasses = 0;
 
 int _windowId[2] = {0};
 
+int g_modifier = 0;
 int g_rotating = 0;
 int g_panning = 0;
 int g_scaling = 0;
@@ -85,6 +88,7 @@ static GLfloat m_aLines[3*2*SAMPLE_COLS*SAMPLE_ROWS] = {0};
 
 const GLint m_nBuffers = 1;
 GLfloat *m_pBufferData = NULL;
+GLuint m_nVertexs = 0;
 
 GLuint *m_pIndices = NULL;
 GLuint m_nIndices = 0;
@@ -317,23 +321,25 @@ void DoPeeling()
 
 		glReadPixels(0,0,_windowWidth,_windowHeight,GL_RGB,GL_FLOAT,m_pBufferData);
 		
+		m_nVertexs = 0;
 		m_nIndices = 0;
-		for (unsigned int row=1; row<_windowHeight - 1; ++row)
+		for (unsigned int row=0; row<_windowHeight - 1; ++row)
 		{
-			for (unsigned int col=1; col<_windowWidth - 1; ++col)
+			for (unsigned int col=0; col<_windowWidth - 1; ++col)
 			{
 				typedef struct {
 					GLfloat x,y,z;
 				} _Pos;
 
-				_Pos *p0 = (_Pos *)&GetVertexValue(m_pBufferData, _windowWidth, row - 1, col);
+				//_Pos *p0 = (_Pos *)&GetVertexValue(m_pBufferData, _windowWidth, row - 1, col);
 				_Pos *p1 = (_Pos *)&GetVertexValue(m_pBufferData, _windowWidth, row + 0, col);
 				_Pos *p2 = (_Pos *)&GetVertexValue(m_pBufferData, _windowWidth, row + 1, col);
-				_Pos *tmp[3] = {p0, p1, p2};
-				_Pos **vertexs = tmp + 1;
+				//_Pos *tmp[3] = {p0, p1, p2};
+				_Pos *vertexs[2] = {p1, p2};
 				
 				static GLfloat threshold = 0.9 * (ZNEAR - ZFAR) / 2.0;
 
+				/*
 				for (int i=-1; i <= 1; i++)
 				{
 					for (int j=-1; j <= 1; j++)
@@ -342,7 +348,8 @@ void DoPeeling()
 						else if (vertexs[i][j].z < threshold)
 							continue;
 					}
-				}
+				}*/
+				
 				
 				unsigned int flag = 0;
 				flag |= vertexs[0][0].z < threshold?0x1:0;
@@ -350,34 +357,51 @@ void DoPeeling()
 				flag |= vertexs[1][0].z < threshold?0x4:0;
 				flag |= vertexs[1][1].z < threshold?0x8:0;
 
+				GLfloat average = (vertexs[0][0].z + vertexs[0][1].z + vertexs[1][0].z + vertexs[1][1].z) / 4.0;
+				static GLfloat depth_diff_threshold = 0.006 * (ZFAR - ZNEAR);
+				if (fabsf(vertexs[0][0].z - average) > depth_diff_threshold)
+					flag |= 0x1;
+				if (fabsf(vertexs[0][1].z - average) > depth_diff_threshold)
+					flag |= 0x2;
+				if (fabsf(vertexs[1][0].z - average) > depth_diff_threshold)
+					flag |= 0x4;
+				if (fabsf(vertexs[1][1].z - average) > depth_diff_threshold)
+					flag |= 0x8;
+
 				if (flag == 0x0) {
 					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col;
-					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
 					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col + 1;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
+
 
 					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col + 1;
-					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
 					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col + 1;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
+
 				}
 				else if (flag == 0x1) {
 					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col + 1;
-					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
 					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col + 1;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
+
 				}
 				else if (flag == 0x2) {
 					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col;
-					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
 					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col + 1;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
+
 				}
 				else if (flag == 0x4) {
 					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col;
-					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col + 1;
 					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col + 1;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col + 1;
+
 				}
 				else if (flag == 0x8) {
 					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col;
-					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
 					m_pIndices[m_nIndices++] = (row + 0) * _windowWidth + col + 1;
+					m_pIndices[m_nIndices++] = (row + 1) * _windowWidth + col;
+
 				}
 			}
 		}
@@ -493,7 +517,57 @@ void initGL()
 	glDisable(GL_DITHER);
 }
 
+void saveModel()
+{
+	GLMmodel m;
+	GLMmodel *model = &m;
+	m.pathname      = NULL;
+	m.mtllibname    = NULL;
+	m.numvertices   =_windowWidth * _windowHeight;
+	m.vertices      = m_pBufferData - 3;
+	m.numnormals    = 0;
+	m.normals       = NULL;
+	m.numtexcoords  = 0;
+	m.texcoords     = NULL;
+	m.numfacetnorms = 0;
+	m.facetnorms    = NULL;
+	m.numtriangles  = m_nIndices / 3;
+	m.triangles     = NULL;
+	m.nummaterials  = 0;
+	m.materials     = NULL;
+	m.numgroups     = 0;
+	m.groups        = NULL;
+	m.position[0]   = 0.0;
+	m.position[1]   = 0.0;
+	m.position[2]   = 0.0;
 
+	GLMgroup *group = (GLMgroup*)malloc(sizeof(GLMgroup));
+	group->name = "Default";
+	group->material = 0;
+	group->numtriangles = model->numtriangles;
+	group->triangles = (GLuint*)malloc(sizeof(GLuint) * model->numtriangles + 1);
+	group->next = model->groups;
+	model->groups = group;
+	model->numgroups++;
+
+	model->triangles = (GLMtriangle*)malloc(sizeof(GLMtriangle) *
+		model->numtriangles + 1);
+	for (int i=0; i < model->numtriangles; i++)
+	{
+		model->triangles[i].vindices[0] = m_pIndices[3*i + 0];
+		model->triangles[i].vindices[1] = m_pIndices[3*i + 1];
+		model->triangles[i].vindices[2] = m_pIndices[3*i + 2];
+		group->triangles[i] = i;
+	}
+
+	char filename[] = "face_mesh.obj";
+
+	glmFacetNormals(model);	
+	glmWriteOBJ(model, filename, GLM_FLAT);
+
+	free(group);
+	free(model->triangles);
+}
 
 void displayPeelingView()
 {
@@ -625,7 +699,10 @@ void keyboardFunc(unsigned char key, int x, int y)
 		g_pos = nv::vec3f(0,0,4);
 		g_rot = nv::vec2f(0,0);
 		g_bbTrans = nv::vec3f(0,0,0);
-		break;;
+		break;
+	case 's':case 'S':
+		saveModel();
+		break;
 	case 27:
 		exit(0);
 		break;
@@ -650,6 +727,12 @@ void motionFunc(int x, int y)
 
 	float rel_x = (g_newX - g_oldX) / (float)_windowWidth;
 	float rel_y = (g_newY - g_oldY) / (float)_windowHeight;
+
+	if (g_modifier & GLUT_ACTIVE_SHIFT) {
+		rel_x /= 5.0;
+		rel_y /= 5.0;
+	}
+
 	if (g_rotating)
 	{
 		g_rot.y += (rel_x * 180);
@@ -672,7 +755,7 @@ void motionFunc(int x, int y)
 void mouseFunc(int button, int state, int x, int y)
 {
 	g_newX = x; g_newY = y;
-	fprintf(stdout,"btn: %d, state: %d\n",button,state);
+	g_modifier = glutGetModifiers();
 	switch(button)
 	{
 	case GLUT_LEFT_BUTTON:
