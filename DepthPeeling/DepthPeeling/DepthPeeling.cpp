@@ -32,8 +32,8 @@
 #define GetVertexValue(__buffer, __width, __row, __col) (__buffer[((3*__width)*(__row) + 3*(__col))])
 #define GetVertexIndex(__width, __row, __col) ((3*__width)*(__row) + (__col))
 
-static float ZNEAR = 2.0;
-static float ZFAR = 8.0;
+static float ZNEAR = 1.0;
+static float ZFAR = 4.0;
 static float FOVY = 45.0;
 
 
@@ -67,7 +67,8 @@ nv::vec3f g_bbTrans(0.0, 0.0, 0.0);
 nv::vec2f g_rot(0.0, 0.0);
 nv::vec3f g_pos(0.0, 0.0, 4.0);
 
-nv::vec3f g_up(0.0, -4.0, 0.0);
+nv::vec3f g_eyePosition(0.0, -3.0, 0.0);
+nv::vec3f g_eyeCenter(0,0,0);
 
 
 GLSLProgramObject g_shaderFrontInit;
@@ -117,14 +118,17 @@ void LoadModel(char path[])
 		fprintf(stderr,"Can't load mesh file: %s\n",path);
 		exit(1);
 	}
+	/*
 	GLfloat dim[3] = {0};
 	glmDimensions(_model, dim);
 	float r = sqrtf(dim[0]*dim[0] + dim[1]*dim[1] + dim[2]*dim[2]) / 2;
-	float l = sqrtf(g_up.x * g_up.x + g_up.y * g_up.y + g_up.z * g_up.z);
+	float l = sqrtf(g_eyePosition.x * g_eyePosition.x + g_eyePosition.y * g_eyePosition.y + g_eyePosition.z * g_eyePosition.z);
 	float r_max = l * sinf(FOVY*M_PI/360);
 	g_fPeelingScale = r_max / r;
-	//ZNEAR = l - 1.5 * r;
-	//ZFAR = l + 1.5 * r;
+	ZNEAR = l - 1.5 * r;
+	ZFAR = l + 1.5 * r;
+	*/
+	glmUnitize(_model);
 	
 	g_modelDisplayList = glmList(_model, GLM_SMOOTH);
 }
@@ -337,7 +341,7 @@ void DoPeeling()
 				//_Pos *tmp[3] = {p0, p1, p2};
 				_Pos *vertexs[2] = {p1, p2};
 				
-				static GLfloat threshold = 0.9 * (ZNEAR - ZFAR) / 2.0;
+				static GLfloat threshold = -0.9 * ZFAR - 0.1 * ZNEAR;// 0.9 * (ZNEAR - ZFAR) / 2.0;
 
 				/*
 				for (int i=-1; i <= 1; i++)
@@ -581,16 +585,17 @@ void displayPeelingView()
 	glPushMatrix();
 	glLoadIdentity();
 
-	GLfloat ratio = g_fPeelingScale * _windowWidth / _windowHeight;
-	glOrtho(-ratio, ratio, -g_fPeelingScale, g_fPeelingScale, ZNEAR, ZFAR);
+	GLfloat ratio = 1.0 * _windowWidth / _windowHeight;
+	glOrtho(-ratio, ratio, -1.0, 1.0, ZNEAR, ZFAR);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	
-	gluLookAt(g_up.x, g_up.y, g_up.z, 0, 0, 0, 0, 0, 1);
-	
-	glScalef(g_fPeelingScale*2, g_fPeelingScale*2, g_fPeelingScale*2);
 
+	gluLookAt(
+		g_eyePosition.x, g_eyePosition.y, g_eyePosition.z,
+		g_eyeCenter.x, g_eyeCenter.y, g_eyeCenter.z,
+		0, 0, 1);
+	
 	DoPeeling();
 	
 	glMatrixMode(GL_PROJECTION);
@@ -620,7 +625,7 @@ void displayCameraView()
 	glTranslatef(g_bbTrans.x, g_bbTrans.y, g_bbTrans.z);
 
 	float r = ZFAR - ZNEAR;
-	float l = sqrtf(g_up.x * g_up.x + g_up.y * g_up.y + g_up.z * g_up.z);
+	float l = sqrtf(g_eyePosition.x * g_eyePosition.x + g_eyePosition.y * g_eyePosition.y + g_eyePosition.z * g_eyePosition.z);
 	float r_max = l * sinf(FOVY*M_PI/360);
     float g_fCameraScale = r_max / r * 2;
 
@@ -629,6 +634,10 @@ void displayCameraView()
 	glColor3f(1.0, 1.0, 1.0);
 	glutWireCube(1.0);
 
+	glPushMatrix();
+	nv::vec3f dist = (g_eyePosition - g_eyeCenter);
+	float distance = sqrtf(dist.x * dist.x + dist.y * dist.y + dist.z * dist.z);
+	glTranslatef(0, 0, distance);
 	glEnableClientState(GL_VERTEX_ARRAY);
 
 	glVertexPointer(3, GL_FLOAT, 0, m_pBufferData);;
@@ -636,6 +645,7 @@ void displayCameraView()
 	glDrawElements(GL_TRIANGLES, m_nIndices, GL_UNSIGNED_INT, m_pIndices);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
+	glPopMatrix();
 
 	glutSwapBuffers();
 }
@@ -672,7 +682,7 @@ void reshape(int w, int h)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	gluPerspective(FOVY, (float)_windowWidth/(float)_windowHeight, 0.02, 50);
+	gluPerspective(FOVY, (float)_windowWidth / (float)_windowHeight, 0.02, 50);
 
 	glMatrixMode(GL_MODELVIEW);
 	glViewport(0, 0, _windowWidth, _windowHeight);
@@ -680,7 +690,6 @@ void reshape(int w, int h)
 
 void keyboardFunc(unsigned char key, int x, int y)
 {
-	key = (unsigned char)tolower(key);
 	switch(key)
 	{
 	case '+':case '=':
