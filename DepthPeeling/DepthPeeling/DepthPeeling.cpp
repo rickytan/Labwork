@@ -67,8 +67,9 @@ nv::vec3f g_bbTrans(0.0, 0.0, 0.0);
 nv::vec2f g_rot(0.0, 0.0);
 nv::vec3f g_pos(0.0, 0.0, 4.0);
 
-nv::vec3f g_eyePosition(0.0, -3.0, 0.0);
+nv::vec3f g_eyePosition(0.0, -2.0, 0.0);
 nv::vec3f g_eyeCenter(0,0,0);
+nv::vec3f g_eyeUp(0,0,1);
 
 
 GLSLProgramObject g_shaderFrontInit;
@@ -162,6 +163,52 @@ void deleteBuffer(GLfloat *buffer)
 
 void DrawModel()
 {
+	//glutSolidSphere(0.5, 64, 32);
+	//glutSolidCube(1.0);
+
+	//glRotatef(90, 1, 0, 0);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//glBegin(GL_POLYGON);
+	//{
+	//	glVertex3f(-0.5, -0.5, 0.5);
+	//	glVertex3f( 0.5, -0.5, -1.5);
+	//	glVertex3f( 0.5,  0.5, -1.5);
+	//	glVertex3f(-0.5,  0.5, 0.5);
+	//}
+	//glEnd();
+	//return;
+
+
+	//GLdouble projectionMatrix[16] = {0};
+	//GLdouble modelViewMatrix[16] = {0};
+	//GLint viewport[4] = {0};
+
+	//glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
+	//glGetDoublev(GL_MODELVIEW_MATRIX, modelViewMatrix);
+	//glGetIntegerv(GL_VIEWPORT, viewport);
+
+	//GLdouble x = 0.0, y = 0.0, z = 0.0;
+	//gluProject(-0.25, 0.0,-0.5,
+	//	modelViewMatrix,
+	//	projectionMatrix,
+	//	viewport,
+	//	&x, &y, &z);
+	//gluProject(-0.25, 0.0, 0.0,
+	//	modelViewMatrix,
+	//	projectionMatrix,
+	//	viewport,
+	//	&x, &y, &z);
+	//gluProject(-0.25, 0.0, 0.5,
+	//	modelViewMatrix,
+	//	projectionMatrix,
+	//	viewport,
+	//	&x, &y, &z);
+	//gluProject(-0.25, 0.0, 1.5,
+	//	modelViewMatrix,
+	//	projectionMatrix,
+	//	viewport,
+	//	&x, &y, &z);
+
 	if (_model)
 		glCallList(g_modelDisplayList);
 	else
@@ -341,7 +388,8 @@ void DoPeeling()
 				//_Pos *tmp[3] = {p0, p1, p2};
 				_Pos *vertexs[2] = {p1, p2};
 				
-				static GLfloat threshold = -0.9 * ZFAR - 0.1 * ZNEAR;// 0.9 * (ZNEAR - ZFAR) / 2.0;
+				static GLfloat ratio = 0.9f;
+				static GLfloat threshold = -ratio * ZFAR - (1.0f - ratio) * ZNEAR;// 0.9 * (ZNEAR - ZFAR) / 2.0;
 
 				/*
 				for (int i=-1; i <= 1; i++)
@@ -587,6 +635,7 @@ void displayPeelingView()
 
 	GLfloat ratio = 1.0 * _windowWidth / _windowHeight;
 	glOrtho(-ratio, ratio, -1.0, 1.0, ZNEAR, ZFAR);
+	//gluPerspective(FOVY, ratio, ZNEAR, ZFAR);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -594,7 +643,7 @@ void displayPeelingView()
 	gluLookAt(
 		g_eyePosition.x, g_eyePosition.y, g_eyePosition.z,
 		g_eyeCenter.x, g_eyeCenter.y, g_eyeCenter.z,
-		0, 0, 1);
+		g_eyeUp.x, g_eyeUp.y, g_eyeUp.z);
 	
 	DoPeeling();
 	
@@ -622,6 +671,7 @@ void displayCameraView()
 
 	glRotatef(g_rot.x, 1, 0, 0);
 	glRotatef(g_rot.y, 0, 1, 0);
+
 	glTranslatef(g_bbTrans.x, g_bbTrans.y, g_bbTrans.z);
 
 	float r = ZFAR - ZNEAR;
@@ -631,6 +681,25 @@ void displayCameraView()
 
 	glScalef(g_fCameraScale, g_fCameraScale, g_fCameraScale);
 
+	glBegin(GL_LINES);
+	{
+		// X-axis
+		glColor3f(1, 0, 0);
+		glVertex3f(0, 0, 0);
+		glVertex3f(5.0, 0.0, 0.0);
+
+		// Y-axis
+		glColor3f(0, 1, 0);
+		glVertex3f(0, 0, 0);
+		glVertex3f(0.0, 5.0, 0.0);
+
+		// Z-axis
+		glColor3f(0, 0, 1);
+		glVertex3f(0, 0, 0);
+		glVertex3f(0.0, 0.0, 5.0);
+	}
+	glEnd();
+
 	glColor3f(1.0, 1.0, 1.0);
 	glutWireCube(1.0);
 
@@ -638,6 +707,7 @@ void displayCameraView()
 	nv::vec3f dist = (g_eyePosition - g_eyeCenter);
 	float distance = sqrtf(dist.x * dist.x + dist.y * dist.y + dist.z * dist.z);
 	glTranslatef(0, 0, distance);
+	glScalef((float)_windowWidth/(float)_windowHeight, 1.0, 1.0);
 	glEnableClientState(GL_VERTEX_ARRAY);
 
 	glVertexPointer(3, GL_FLOAT, 0, m_pBufferData);;
@@ -682,6 +752,8 @@ void reshape(int w, int h)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
+	float ratio = (float)_windowWidth / _windowHeight;
+	//glOrtho(-2,2,-2.0 / ratio, 2.0 / ratio, 0.02, 50);
 	gluPerspective(FOVY, (float)_windowWidth / (float)_windowHeight, 0.02, 50);
 
 	glMatrixMode(GL_MODELVIEW);

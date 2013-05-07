@@ -10,21 +10,25 @@ varying vec4 vertex;
 
 void main(void)
 {
-	float layer0 = textureRect(lastDepth, gl_FragCoord.xy).r;
-	float layer1 = textureRect(currentDepth, gl_FragCoord.xy).r;
+	float layer0 = textureRect(lastDepth, gl_FragCoord.xy).z;
+	float layer1 = textureRect(currentDepth, gl_FragCoord.xy).z;
+
 	
-	float fn = zNear * zFar;
+	/*float fn = zNear * zFar;
 	float f_n = zFar - zNear;
 	float depth0 = fn / (zFar - layer0 * f_n);
 	float depth1 = fn / (zFar - layer1 * f_n);
 	gl_FragData[0] = vec4(vertex.xy, - depth0, 1.0);
-	gl_FragData[1] = vec4(vertex.xy, - depth1, 1.0);
+	gl_FragData[1] = vec4(vertex.xy, - depth1, 1.0);*/
 	 
-	//float z_n0 = 2.0 * layer0 - 1.0;
-	//float z_e0 = 2.0 * zNear * zFar / (zFar + zNear - z_n0 * (zFar - zNear));
-	//float z_n1 = 2.0 * layer0 - 1.0;
-	//float z_e1 = 2.0 * zNear * zFar / (zFar + zNear - z_n1 * (zFar - zNear));
+	gl_FragData[0] = vec4(vertex.xy, - (zNear + (zFar - zNear) * layer0), 1.0);
+	gl_FragData[1] = vec4(vertex.xy, - (zNear + (zFar - zNear) * layer1), 1.0);
+	
+	/*float z_n0 = 2.0 * layer0 - 1.0;
+	float z_e0 = 2.0 * zNear * zFar / (zFar + zNear - z_n0 * (zFar - zNear));
+	float z_n1 = 2.0 * layer0 - 1.0;
+	float z_e1 = 2.0 * zNear * zFar / (zFar + zNear - z_n1 * (zFar - zNear));
 
-	//gl_FragData[0] = vec4(vertex.xy, - z_e0, 1.0);
-	//gl_FragData[1] = vec4(vertex.xy, - z_e1, 1.0);
+	gl_FragData[0] = vec4(vertex.xy, - z_e0, 1.0);
+	gl_FragData[1] = vec4(vertex.xy, - z_e1, 1.0);*/
 }
