@@ -5,10 +5,7 @@
 #include <stdio.h>			// Header File For Standard Input/Output
 #include <iostream>
 #include <sstream>
-#include <gl/glew.h>
-#include <gl/gl.h>			// Header File For The OpenGL32 Library
-#include <gl/glu.h>			// Header File For The GLu32 Library
-#include <gl/glaux.h>		// Header File For The Glaux Library
+#include "cocoagl.h"
 #include <gl/glut.h>
 #include <GLSLProgramObject.h>
 #include "glm.h"
@@ -35,7 +32,6 @@
 static float ZNEAR = 1.0;
 static float ZFAR = 4.0;
 static float FOVY = 45.0;
-
 
 //#define MODEL_FILE_PATH "../media/models/Aircraft.obj"
 //#define MODEL_FILE_PATH "../media/models/dragon.obj"
@@ -559,8 +555,17 @@ void initGL()
 	MakeFullScreenQuad();
 
 	glDisable(GL_CULL_FACE);
-	glDisable(GL_LIGHTING);
+	//glDisable(GL_LIGHTING);
 	glDisable(GL_NORMALIZE);
+
+	glEnable(GL_LIGHTING);
+
+	static GLfloat light_pos[] = {0, 0, 2.0, 1.0};
+	static GLfloat ambient_color[] = {0.8, 0.8, 0.8, 1.0};
+	static GLfloat diffuse_color[] = {0.3, 0.3, 0.3, 1.0};
+
+	glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+	glLightfv(GL_LIGHT0, GL_AMBIENT_AND_DIFFUSE, ambient_color);
 
 	glClearColor (0.0, 0.0, 0.0, 0.0);
 	glShadeModel(GL_SMOOTH);
@@ -702,6 +707,12 @@ void displayCameraView()
 
 	glColor3f(1.0, 1.0, 1.0);
 	glutWireCube(1.0);
+
+	static GLfloat ambient_material[] = {0.11, 0.06, 0.11, 1.00};
+	static GLfloat diffuse_material[] = {0.43, 0.47, 0.54, 1.00};
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT, ambient_material);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_material);
 
 	glPushMatrix();
 	nv::vec3f dist = (g_eyePosition - g_eyeCenter);
