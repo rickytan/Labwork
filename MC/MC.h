@@ -35,8 +35,6 @@ public:
 private:
 	Handle(AIS_InteractiveContext)		m_context;
 	Handle(V3d_Viewer)					m_viewer;
-	Handle(AIS_Shape)					m_rootAISShape;
-	TopoDS_Shape						m_rootTopoShape;
 	Handle(Graphic3d_GraphicDriver)		m_graphicDriver;
 };
 

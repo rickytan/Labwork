@@ -125,6 +125,14 @@ BEGIN
     END
 END
 
+IDR_POPUPMENU MENU 
+BEGIN
+    POPUP "Root"
+    BEGIN
+        MENUITEM "Reset(&R)",                   ID_RESET
+    END
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -310,6 +318,11 @@ END
 STRINGTABLE 
 BEGIN
     ID_FILE_OPEN            "打开文件"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_RESET_RESET          "重置视图"
 END
 
 #endif    // 中文(中华人民共和国) resources

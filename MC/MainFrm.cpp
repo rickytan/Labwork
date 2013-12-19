@@ -18,6 +18,7 @@ IMPLEMENT_DYNAMIC(CMainFrame, CFrameWnd)
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_WM_CREATE()
 	ON_WM_SETFOCUS()
+	ON_COMMAND(ID_FILE_OPEN, &CMainFrame::OnFileOpen)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -125,3 +126,59 @@ BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO*
 }
 
 
+
+void CMainFrame::OnFileOpen()
+{
+	// TODO: 在此添加命令处理程序代码
+	// TODO: 在此添加命令处理程序代码
+	CFileDialog dialog(
+		TRUE, // TRUE for FileOpen, FALSE for FileSaveAs
+		NULL,
+		NULL,
+		OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
+		TEXT("STEP file(*.step;*.stp)|*.step;*.stp|All Files (*.*)|*.*||"),
+		this);
+
+	if (dialog.DoModal() == IDOK) {
+		CString filePath = dialog.GetPathName();
+		char file_str[1024] = {0};
+		WideCharToMultiByte(CP_ACP, 0, filePath.GetString(), filePath.GetLength(), file_str, 1024, NULL, NULL);
+
+		SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
+
+		STEPControl_Reader reader;
+		if (reader.ReadFile(file_str) != IFSelect_RetDone) {
+			AfxMessageBox(_T("文件打开错误！"));
+			SetCursor(AfxGetApp()->LoadStandardCursor(IDC_ARROW));
+			return;
+		}
+
+
+		Standard_Integer nbRoots = reader.NbRootsForTransfer();
+		cout << "Number of roots in STEP file: " << nbRoots << endl;
+		Standard_Integer NbTrans = reader.TransferRoots();
+		// translates all transferable roots, and returns the number of
+		//successful translations
+		cout << "STEP roots transferred: " << NbTrans << endl;
+		cout << "Number of resulting shapes is: " << reader.NbShapes() << endl;
+		m_rootTopoShape = reader.OneShape();
+		if (!m_rootTopoShape.IsNull()) {
+			Handle(AIS_InteractiveContext) m_context = ((CMCApp*)AfxGetApp())->GetAISContext();
+			m_context->RemoveAll();
+
+			m_rootAISShape = new AIS_Shape(m_rootTopoShape);
+			//m_context->SetColor(m_rootAISShape, Quantity_NOC_SALMON);
+			//m_context->SetMaterial(m_rootAISShape, Graphic3d_NOM_METALIZED);
+			m_context->SetDisplayMode(m_rootAISShape, true);
+			m_context->Display(m_rootAISShape);
+
+			SetCursor(AfxGetApp()->LoadStandardCursor(IDC_ARROW));
+		}
+		else {
+			SetCursor(AfxGetApp()->LoadStandardCursor(IDC_ARROW));
+			AfxMessageBox(_T("模型为空！"));
+		}
+
+		m_wndView.Reset();
+	}
+}

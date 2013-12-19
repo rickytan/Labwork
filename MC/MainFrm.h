@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ChildView.h"
+#include "../ModelComp/required.h"
 
 class CMainFrame : public CFrameWnd
 {
@@ -28,7 +29,6 @@ public:
 // 实现
 public:
 	virtual ~CMainFrame();
-	CChildView * GetView() { return &m_wndView; }
 
 #ifdef _DEBUG
 	virtual void AssertValid() const;
@@ -40,11 +40,16 @@ protected:  // 控件条嵌入成员
 	CToolBar    m_wndToolBar;
 	CChildView    m_wndView;
 
+	Handle(AIS_Shape)					m_rootAISShape;
+	TopoDS_Shape						m_rootTopoShape;
+
 // 生成的消息映射函数
 protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSetFocus(CWnd *pOldWnd);
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnFileOpen();
 };
 
 

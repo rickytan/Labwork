@@ -18,7 +18,6 @@
 
 BEGIN_MESSAGE_MAP(CMCApp, CWinApp)
 	ON_COMMAND(ID_APP_ABOUT, &CMCApp::OnAppAbout)
-	ON_COMMAND(ID_FILE_OPEN, &CMCApp::OnFileOpen)
 END_MESSAGE_MAP()
 
 
@@ -58,7 +57,6 @@ CMCApp::CMCApp()
 		ExitProcess(1);
 	}
 }
-
 
 // 唯一的一个 CMCApp 对象
 
@@ -108,10 +106,6 @@ BOOL CMCApp::InitInstance()
 		NULL);
 
 
-
-
-
-
 	// 唯一的一个窗口已初始化，因此显示它并对其进行更新
 	pFrame->ShowWindow(SW_SHOW);
 	pFrame->UpdateWindow();
@@ -122,8 +116,6 @@ BOOL CMCApp::InitInstance()
 
 
 // CMCApp 消息处理程序
-
-
 
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
@@ -166,61 +158,3 @@ void CMCApp::OnAppAbout()
 
 // CMCApp 消息处理程序
 
-
-void CMCApp::OnFileOpen()
-{
-	// TODO: 在此添加命令处理程序代码
-	CFileDialog dialog(
-		TRUE, // TRUE for FileOpen, FALSE for FileSaveAs
-		NULL,
-		NULL,
-		OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
-		TEXT("STEP file(*.step;*.stp)|*.step;*.stp|All Files (*.*)|*.*||"),
-		m_pMainWnd);
-
-	if (dialog.DoModal() == IDOK) {
-		CString filePath = dialog.GetPathName();
-		char file_str[1024] = {0};
-		WideCharToMultiByte(CP_ACP, 0, filePath.GetString(), filePath.GetLength(), file_str, 1024, NULL, NULL);
-	
-		SetCursor(this->LoadStandardCursor(IDC_WAIT));
-
-		STEPControl_Reader reader;
-		if (reader.ReadFile(file_str) != IFSelect_RetDone) {
-			AfxMessageBox(_T("文件打开错误！"));
-			SetCursor(this->LoadStandardCursor(IDC_ARROW));
-			return;
-		}
-
-
-		Standard_Integer nbRoots = reader.NbRootsForTransfer();
-		cout << "Number of roots in STEP file: " << nbRoots << endl;
-		Standard_Integer NbTrans = reader.TransferRoots();
-		// translates all transferable roots, and returns the number of
-		//successful translations
-		cout << "STEP roots transferred: " << NbTrans << endl;
-		cout << "Number of resulting shapes is: " << reader.NbShapes() << endl;
-		m_rootTopoShape = reader.OneShape();
-		if (!m_rootTopoShape.IsNull()) {
-			m_rootAISShape = new AIS_Shape(m_rootTopoShape);
-			m_context->SetColor(m_rootAISShape, Quantity_NOC_RED);
-			m_context->SetMaterial(m_rootAISShape, Graphic3d_NOM_GOLD);
-			m_context->SetDisplayMode(m_rootAISShape, 1);
-			m_context->Display(m_rootAISShape);
-			SetCursor(this->LoadStandardCursor(IDC_ARROW));
-			//PostMessage(m_pMainWnd, WM_PAINT, 0, 0);
-			m_pMainWnd->Invalidate();
-		}
-		else {
-			AfxMessageBox(_T("模型为空！"));
-		}
-
-		BRepPrimAPI_MakeWedge w(20, 20, 20, 3);
-		TopoDS_Shape ws = w.Solid();
-		Handle(AIS_Shape) ais = new AIS_Shape(ws);
-		m_context->SetColor(ais, Quantity_NOC_GREEN);
-		m_context->Display(ais);
-
-		(((CMainFrame*)m_pMainWnd)->GetView())->Reset();
-	}
-}
