@@ -196,6 +196,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\select_api.h"
+				>
+			</File>
+			<File
 				RelativePath=".\standard_types.h"
 				>
 			</File>

@@ -220,5 +220,7 @@ void CMCApp::OnFileOpen()
 		Handle(AIS_Shape) ais = new AIS_Shape(ws);
 		m_context->SetColor(ais, Quantity_NOC_GREEN);
 		m_context->Display(ais);
+
+		(((CMainFrame*)m_pMainWnd)->GetView())->Reset();
 	}
 }

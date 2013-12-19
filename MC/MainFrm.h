@@ -28,6 +28,8 @@ public:
 // й╣ож
 public:
 	virtual ~CMainFrame();
+	CChildView * GetView() { return &m_wndView; }
+
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;

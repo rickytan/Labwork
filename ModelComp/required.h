@@ -14,7 +14,7 @@
 #include "topo_func.h"
 #include "topo_types.h"
 #include "v3d_api.h"
-
+#include "select_api.h"
 
 
 #ifdef _WIN32
