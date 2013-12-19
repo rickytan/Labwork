@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelComp", "ModelComp.vcproj", "{F59BBBF6-5C03-4E51-8B4E-4182BFFF8212}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MC", "..\MC\MC.vcproj", "{3FA7BC12-31CE-4F16-9F50-8ECC6EC3E188}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F59BBBF6-5C03-4E51-8B4E-4182BFFF8212}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F59BBBF6-5C03-4E51-8B4E-4182BFFF8212}.Debug|Win32.Build.0 = Debug|Win32
+		{F59BBBF6-5C03-4E51-8B4E-4182BFFF8212}.Release|Win32.ActiveCfg = Release|Win32
+		{F59BBBF6-5C03-4E51-8B4E-4182BFFF8212}.Release|Win32.Build.0 = Release|Win32
+		{3FA7BC12-31CE-4F16-9F50-8ECC6EC3E188}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3FA7BC12-31CE-4F16-9F50-8ECC6EC3E188}.Debug|Win32.Build.0 = Debug|Win32
+		{3FA7BC12-31CE-4F16-9F50-8ECC6EC3E188}.Release|Win32.ActiveCfg = Release|Win32
+		{3FA7BC12-31CE-4F16-9F50-8ECC6EC3E188}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
