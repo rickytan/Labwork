@@ -47,6 +47,8 @@ protected:
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 
 	afx_msg void OnReset();
+	afx_msg void OnDrawSolid();
+	afx_msg void OnDrawWire();
 
 	DECLARE_MESSAGE_MAP()
 
@@ -57,10 +59,10 @@ private:
 	CPoint							m_mouse;
 
 	BOOL							m_showContextMenu;
+	BOOL							m_shouldRotate;
 
-	Standard_Real					m_scale;
-	gp_Vec 							m_translate;
-	gp_Quaternion					m_rotate;
-
+public:
+	
+	afx_msg void OnBackgroundColor();
 };
 

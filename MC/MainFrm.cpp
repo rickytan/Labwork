@@ -7,7 +7,7 @@
 #include "MainFrm.h"
 
 #ifdef _DEBUG
-#define new DEBUG_NEW
+//#define new DEBUG_NEW
 #endif
 
 
@@ -69,6 +69,10 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		TRACE0("未能创建状态栏\n");
 		return -1;      // 未能创建
 	}
+
+	RECT rect = {0, 0, 240, 30};
+	if (!m_progressCtrl.Create(0, rect, &m_wndStatusBar, 0))
+		TRACE0("未能创建进度条\n");
 
 	// TODO: 如果不需要可停靠工具栏，则删除这三行
 	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
@@ -145,25 +149,32 @@ void CMainFrame::OnFileOpen()
 		WideCharToMultiByte(CP_ACP, 0, filePath.GetString(), filePath.GetLength(), file_str, 1024, NULL, NULL);
 
 		SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
+		SetStatus(_T("加载文件中..."));
 
 		STEPControl_Reader reader;
 		if (reader.ReadFile(file_str) != IFSelect_RetDone) {
 			AfxMessageBox(_T("文件打开错误！"));
 			SetCursor(AfxGetApp()->LoadStandardCursor(IDC_ARROW));
+			ResetStatus();
 			return;
 		}
-
+		SetStatus(_T("模型转换"));
+		
+		Handle(AIS_InteractiveContext) m_context = ((CMCApp*)AfxGetApp())->GetAISContext();
 
 		Standard_Integer nbRoots = reader.NbRootsForTransfer();
 		cout << "Number of roots in STEP file: " << nbRoots << endl;
+		
 		Standard_Integer NbTrans = reader.TransferRoots();
 		// translates all transferable roots, and returns the number of
 		//successful translations
 		cout << "STEP roots transferred: " << NbTrans << endl;
-		cout << "Number of resulting shapes is: " << reader.NbShapes() << endl;
-		m_rootTopoShape = reader.OneShape();
+		Standard_Integer NbShapes = reader.NbShapes();
+		cout << "Number of resulting shapes is: " << NbShapes << endl;
+
+		m_rootTopoShape = reader.Shape();// reader.OneShape();
 		if (!m_rootTopoShape.IsNull()) {
-			Handle(AIS_InteractiveContext) m_context = ((CMCApp*)AfxGetApp())->GetAISContext();
+			
 			m_context->RemoveAll();
 
 			m_rootAISShape = new AIS_Shape(m_rootTopoShape);
@@ -171,6 +182,8 @@ void CMainFrame::OnFileOpen()
 			//m_context->SetMaterial(m_rootAISShape, Graphic3d_NOM_METALIZED);
 			m_context->SetDisplayMode(m_rootAISShape, true);
 			m_context->Display(m_rootAISShape);
+			m_context->SetSelectionMode(m_rootAISShape, 4);
+			m_context->SetHilightColor(Quantity_NOC_RED);
 
 			SetCursor(AfxGetApp()->LoadStandardCursor(IDC_ARROW));
 		}
@@ -178,7 +191,10 @@ void CMainFrame::OnFileOpen()
 			SetCursor(AfxGetApp()->LoadStandardCursor(IDC_ARROW));
 			AfxMessageBox(_T("模型为空！"));
 		}
-
+		
+		
+		SetCursor(AfxGetApp()->LoadStandardCursor(IDC_ARROW));
+		ResetStatus();
 		m_wndView.Reset();
 	}
 }

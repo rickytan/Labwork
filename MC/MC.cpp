@@ -51,9 +51,9 @@ CMCApp::CMCApp()
 		m_context = new AIS_InteractiveContext(m_viewer);
 		m_context->SetDeviationCoefficient(0.0008);
 	}
-	catch (Standard_Failure)
+	catch (Standard_Failure e)
 	{
-		AfxMessageBox(_T("初始化图形驱动失败！程序无法运行！"));
+		AfxMessageBox(_T("初始化图形驱动失败！程序无法运行！\nError: ") + CString(e.GetMessageString()));
 		ExitProcess(1);
 	}
 }

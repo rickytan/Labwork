@@ -68,7 +68,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				AdditionalLibraryDirectories="D:\Program Files\OpenCASCADE6.6.0\ros\win32\vc9\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"

@@ -35,10 +35,15 @@ public:
 	virtual void Dump(CDumpContext& dc) const;
 #endif
 
+private:
+	void SetStatus(LPCTSTR text) { m_wndStatusBar.SetPaneText(0, text); }
+	void ResetStatus() { m_wndStatusBar.SetPaneText(0, _T("就绪")); }
+
 protected:  // 控件条嵌入成员
 	CStatusBar  m_wndStatusBar;
 	CToolBar    m_wndToolBar;
 	CChildView    m_wndView;
+	CProgressCtrl m_progressCtrl;
 
 	Handle(AIS_Shape)					m_rootAISShape;
 	TopoDS_Shape						m_rootTopoShape;
@@ -47,9 +52,9 @@ protected:  // 控件条嵌入成员
 protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSetFocus(CWnd *pOldWnd);
-	DECLARE_MESSAGE_MAP()
-public:
 	afx_msg void OnFileOpen();
+
+	DECLARE_MESSAGE_MAP()
 };
 
 

@@ -29,13 +29,14 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_CONTEXTMENU()
 	ON_WM_SIZE()
 	ON_COMMAND(ID_RESET, &CChildView::OnReset)
+	ON_COMMAND(ID_DRAW_SOLID, &CChildView::OnDrawSolid)
+	ON_COMMAND(ID_DRAW_WIRE, &CChildView::OnDrawWire)
+	ON_COMMAND(ID_BACKGROUND_COLOR, &CChildView::OnBackgroundColor)
 END_MESSAGE_MAP()
 
 CChildView::CChildView()
 : m_winWidth(0)
 , m_winHeight(0)
-, m_rotate()
-, m_translate()
 {
 
 }
@@ -49,7 +50,9 @@ void CChildView::Reset()
 	m_view->Reset();
 
 	m_view->SetProj(V3d_Zpos);
-	m_view->FitAll();
+	if (!m_view.IsNull())
+		m_view->FitAll();
+	m_view->ZFitAll();
 }
 
 
@@ -93,6 +96,7 @@ int CChildView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 void CChildView::OnMButtonDown(UINT nFlags, CPoint point)
 {
 	V3d_View *m_view;
+	AIS_InteractiveContext *m_context;
 
 }
 
@@ -105,12 +109,13 @@ void CChildView::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	//V3d_View *m_view;
 	AIS_InteractiveContext *context;
-	
+	((CMCApp*)AfxGetApp())->GetAISContext()->Select();
 }
 
 void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	//V3d_View *m_view;
+	m_shouldRotate = TRUE;
 	m_view->StartRotation(point.x, point.y);
 }
 
@@ -132,6 +137,15 @@ void CChildView::OnContextMenu(CWnd* pWnd, CPoint pos)
 	CMenu menu;
 	menu.LoadMenu(IDR_POPUPMENU);
 	CMenu *popup = menu.GetSubMenu(0);
+	if (m_view->ComputedMode()) {
+		popup->CheckMenuItem(ID_DRAW_WIRE, MF_CHECKED | MF_BYCOMMAND);
+		popup->CheckMenuItem(ID_DRAW_SOLID, MF_UNCHECKED | MF_BYCOMMAND);
+	}
+	else {
+		popup->CheckMenuItem(ID_DRAW_WIRE, MF_UNCHECKED | MF_BYCOMMAND);
+		popup->CheckMenuItem(ID_DRAW_SOLID, MF_CHECKED | MF_BYCOMMAND);
+	}
+
 	
 	ClientToScreen(&pos);
 	popup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, pos.x, pos.y, this->GetTopLevelFrame());
@@ -167,17 +181,19 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 
 	Standard_Real dx = point.x - m_mouse.x;
 	Standard_Real dy = m_mouse.y - point.y;
-	if (nFlags & MK_MBUTTON) {
+	if (nFlags & MK_LBUTTON && m_shouldRotate) {
+		m_view->Rotation(point.x, point.y);
+	}
+	else if (nFlags & MK_MBUTTON) {
 		Standard_Real transFactor =  (isShiftDown ? 2.0 : 5.0) / m_view->Scale();
 		m_view->Pan(dx, dy);
 	}
-	if (nFlags & MK_LBUTTON) {
-		m_view->Rotation(point.x, point.y);
-	}
-	if (nFlags & MK_RBUTTON) {
+	else if (nFlags & MK_RBUTTON) {
 		m_showContextMenu = FALSE;
 		m_view->ZoomAtPoint(m_mouse.x, m_mouse.y, point.x, point.y);
 	}
+	else
+		((CMCApp*)AfxGetApp())->GetAISContext()->MoveTo(point.x, point.y, m_view);
 
 	m_mouse = point;
 }
@@ -205,4 +221,41 @@ void CChildView::OnReset()
 {
 	// TODO: 在此添加命令处理程序代码
 	Reset();
+}
+
+void CChildView::OnDrawSolid()
+{
+	// TODO: 在此添加命令处理程序代码
+	if (m_view->ComputedMode()) {
+		m_view->SetComputedMode(Standard_False);
+	}
+}
+
+void CChildView::OnDrawWire()
+{
+	// TODO: 在此添加命令处理程序代码
+	if (!m_view->ComputedMode()) {
+		m_view->SetComputedMode(Standard_True);
+	}
+}
+
+void CChildView::OnBackgroundColor()
+{
+	// TODO: 在此添加命令处理程序代码
+	Standard_Real R1;
+	Standard_Real G1;
+	Standard_Real B1;
+	m_view->BackgroundColor(Quantity_TOC_RGB,R1,G1,B1);
+	COLORREF m_clr ;
+	m_clr = RGB(R1*255,G1*255,B1*255);
+
+	CColorDialog dlg(m_clr);
+	if (dlg.DoModal() == IDOK) {
+		m_clr = dlg.GetColor();
+		R1 = GetRValue(m_clr)/255.;
+		G1 = GetGValue(m_clr)/255.;
+		B1 = GetBValue(m_clr)/255.;
+		m_view->SetBackgroundColor(Quantity_TOC_RGB, R1, G1, B1);
+		m_view->Redraw();
+	}
 }

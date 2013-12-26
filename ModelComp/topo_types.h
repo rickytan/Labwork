@@ -23,5 +23,16 @@
 #include <TopoDS_Builder.hxx>
 #include <TopoDS_Compound.hxx>
 
+/* Container */
+#include <TopoDS_ListOfShape.hxx>
+#include <TopoDS_ListIteratorOfListOfShape.hxx>
+#include <TopoDS_ListNodeOfListOfShape.hxx>
+#include <TopoDS_Iterator.hxx>
+
+#include <TopTools.hxx>
+#include <TopTools_SequenceOfShape.hxx>
+#include <TopTools_ShapeSet.hxx>
+#include <TopTools_ListIteratorOfListOfShape.hxx>
+
 #endif	/* TOPO_TYPES_H */
 
