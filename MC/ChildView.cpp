@@ -19,6 +19,7 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_CREATE()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
+	ON_WM_LBUTTONDBLCLK()
 	ON_WM_MBUTTONDOWN()
 	ON_WM_MBUTTONUP()
 	ON_WM_RBUTTONDOWN()
@@ -27,16 +28,21 @@ BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_MOUSEHOVER()
 	ON_WM_MOUSEMOVE()
 	ON_WM_CONTEXTMENU()
+	ON_WM_KEYDOWN()
 	ON_WM_SIZE()
 	ON_COMMAND(ID_RESET, &CChildView::OnReset)
 	ON_COMMAND(ID_DRAW_SOLID, &CChildView::OnDrawSolid)
 	ON_COMMAND(ID_DRAW_WIRE, &CChildView::OnDrawWire)
 	ON_COMMAND(ID_BACKGROUND_COLOR, &CChildView::OnBackgroundColor)
+	ON_COMMAND(ID_DRAW_BOUNDING_BOX, &CChildView::OnDrawBoundingBox)
 END_MESSAGE_MAP()
 
 CChildView::CChildView()
 : m_winWidth(0)
 , m_winHeight(0)
+, m_shouldRotate(FALSE)
+, m_mouseMoved(FALSE)
+, m_mouse(0, 0)
 {
 
 }
@@ -95,6 +101,7 @@ int CChildView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CChildView::OnMButtonDown(UINT nFlags, CPoint point)
 {
+	m_mouseMoved = FALSE;
 	V3d_View *m_view;
 	AIS_InteractiveContext *m_context;
 
@@ -108,20 +115,42 @@ void CChildView::OnMButtonUp(UINT nFlags, CPoint point)
 void CChildView::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	//V3d_View *m_view;
-	AIS_InteractiveContext *context;
-	((CMCApp*)AfxGetApp())->GetAISContext()->Select();
+	AIS_InteractiveContext *context = NULL;
+	if (!((CMCApp*)AfxGetApp())->GetAISContext().IsNull())
+		context = (AIS_InteractiveContext *)((CMCApp*)AfxGetApp())->GetAISContext().Access();
+	context->MoveTo(point.x, point.y, m_view);
+	if (nFlags & MK_SHIFT)
+		context->ShiftSelect();
+	else
+		context->Select();
+
+	context->InitSelected();
+	if (context->MoreSelected()) {
+		TopoDS_Solid solid = TopoDS::Solid(context->SelectedShape());
+		context->OpenLocalContext();
+		context->Activate(context->Current(), 2);
+	}
+
+	m_shouldRotate = FALSE;
 }
 
 void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	//V3d_View *m_view;
 	m_shouldRotate = TRUE;
+	m_mouseMoved = FALSE;
 	m_view->StartRotation(point.x, point.y);
+}
+
+void CChildView::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+	
 }
 
 void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
 {
 	m_showContextMenu = TRUE;
+	m_mouseMoved = FALSE;
 	m_view->StartZoomAtPoint(point.x, point.y);
 }
 
@@ -130,6 +159,8 @@ void CChildView::OnRButtonUp(UINT nFlags, CPoint point)
 	if (m_showContextMenu) {
 		OnContextMenu(this, point);
 	}
+	m_showContextMenu = FALSE;
+	m_shouldRotate = FALSE;
 }
 
 void CChildView::OnContextMenu(CWnd* pWnd, CPoint pos)
@@ -137,6 +168,7 @@ void CChildView::OnContextMenu(CWnd* pWnd, CPoint pos)
 	CMenu menu;
 	menu.LoadMenu(IDR_POPUPMENU);
 	CMenu *popup = menu.GetSubMenu(0);
+
 	if (m_view->ComputedMode()) {
 		popup->CheckMenuItem(ID_DRAW_WIRE, MF_CHECKED | MF_BYCOMMAND);
 		popup->CheckMenuItem(ID_DRAW_SOLID, MF_UNCHECKED | MF_BYCOMMAND);
@@ -171,7 +203,7 @@ BOOL CChildView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 void CChildView::OnMouseHover(UINT nFlags, CPoint point)
 {
 	m_mouse = point;
-
+	m_mouseMoved = true;
 }
 
 void CChildView::OnMouseMove(UINT nFlags, CPoint point)
@@ -196,6 +228,14 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 		((CMCApp*)AfxGetApp())->GetAISContext()->MoveTo(point.x, point.y, m_view);
 
 	m_mouse = point;
+	m_mouseMoved = TRUE;
+}
+
+void CChildView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	if (nFlags & MK_SHIFT) {
+		
+	}
 }
 
 void CChildView::OnPaint() 
@@ -227,7 +267,9 @@ void CChildView::OnDrawSolid()
 {
 	// TODO: 在此添加命令处理程序代码
 	if (m_view->ComputedMode()) {
+		SetCursor(AfxGetApp()->LoadCursor(IDC_WAIT));
 		m_view->SetComputedMode(Standard_False);
+		SetCursor(AfxGetApp()->LoadCursor(IDC_WAIT));
 	}
 }
 
@@ -235,7 +277,19 @@ void CChildView::OnDrawWire()
 {
 	// TODO: 在此添加命令处理程序代码
 	if (!m_view->ComputedMode()) {
+		SetCursor(AfxGetApp()->LoadCursor(IDC_WAIT));
 		m_view->SetComputedMode(Standard_True);
+		SetCursor(AfxGetApp()->LoadCursor(IDC_WAIT));
+	}
+}
+
+void CChildView::OnDrawBoundingBox()
+{
+	// TODO: 在此添加命令处理程序代码
+	if (!m_view->ComputedMode()) {
+		SetCursor(AfxGetApp()->LoadCursor(IDC_WAIT));
+		m_view->SetComputedMode(2);
+		SetCursor(AfxGetApp()->LoadCursor(IDC_WAIT));
 	}
 }
 
@@ -259,3 +313,4 @@ void CChildView::OnBackgroundColor()
 		m_view->Redraw();
 	}
 }
+

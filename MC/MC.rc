@@ -133,6 +133,7 @@ BEGIN
         BEGIN
             MENUITEM "实体",                          ID_DRAW_SOLID, CHECKED
             MENUITEM "线框",                          ID_DRAW_WIRE
+            MENUITEM "包围盒",                         ID_DRAW_BOUNDING_BOX
         END
         MENUITEM "背景色",                         ID_BACKGROUND_COLOR
         MENUITEM "重置视图(&R)",                    ID_RESET
