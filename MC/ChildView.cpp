@@ -105,6 +105,7 @@ int CChildView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	//aViewer->SetDefaultBackgroundColor(Quantity_NOC_GRAY);
 	aViewer->SetDefaultBgGradientColors(Quantity_NOC_GRAY30, Quantity_NOC_BLACK);
 	m_view = aViewer->CreateView();
+	m_view->SetAntialiasingOn();
 
 	HWND win = GetSafeHwnd();
 	Handle(WNT_Window) aWNTWindow = new WNT_Window(win);
@@ -133,22 +134,23 @@ void CChildView::OnMButtonUp(UINT nFlags, CPoint point)
 void CChildView::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	//V3d_View *m_view;
-	AIS_InteractiveContext *context = NULL;
-	if (!((CMCApp*)AfxGetApp())->GetAISContext().IsNull())
-		context = (AIS_InteractiveContext *)((CMCApp*)AfxGetApp())->GetAISContext().Access();
-	context->MoveTo(point.x, point.y, m_view);
-	if (nFlags & MK_SHIFT)
-		context->ShiftSelect();
-	else
-		context->Select();
+	if (!m_mouseMoved) {
+		AIS_InteractiveContext *context = NULL;
+		if (!((CMCApp*)AfxGetApp())->GetAISContext().IsNull())
+			context = (AIS_InteractiveContext *)((CMCApp*)AfxGetApp())->GetAISContext().Access();
+		context->MoveTo(point.x, point.y, m_view);
+		if (nFlags & MK_SHIFT)
+			context->ShiftSelect();
+		else
+			context->Select();
 
-	context->InitSelected();
-	if (context->MoreSelected()) {
-		TopoDS_Solid solid = TopoDS::Solid(context->SelectedShape());
-		context->OpenLocalContext();
-		context->Activate(context->Current(), 4);
+		context->InitSelected();
+		if (context->MoreSelected()) {
+			TopoDS_Solid solid = TopoDS::Solid(context->SelectedShape());
+			context->OpenLocalContext();
+			context->Activate(context->Current(), 4);
+		}
 	}
-
 	m_shouldRotate = FALSE;
 }
 
@@ -162,7 +164,7 @@ void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
 
 void CChildView::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
-	
+
 }
 
 void CChildView::OnRButtonDown(UINT nFlags, CPoint point)
@@ -196,7 +198,7 @@ void CChildView::OnContextMenu(CWnd* pWnd, CPoint pos)
 		popup->CheckMenuItem(ID_DRAW_SOLID, MF_CHECKED | MF_BYCOMMAND);
 	}
 
-	
+
 	ClientToScreen(&pos);
 	popup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, pos.x, pos.y, this->GetTopLevelFrame());
 
@@ -252,7 +254,7 @@ void CChildView::OnMouseMove(UINT nFlags, CPoint point)
 void CChildView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
 	if (nFlags & MK_SHIFT) {
-		
+
 	}
 }
 
@@ -268,19 +270,19 @@ void CChildView::OnSize(UINT nType, int cx, int cy)
 	if (m_winHeight != cy ||
 		m_winWidth != cx) {
 
-		m_winWidth = cx;
-		m_winHeight = cy;
+			m_winWidth = cx;
+			m_winHeight = cy;
 
-		if (!m_view.IsNull())
-			m_view->MustBeResized();
+			if (!m_view.IsNull())
+				m_view->MustBeResized();
 
-		Handle(V3d_Viewer) aViewer = m_view->Viewer();
-		if (aViewer->IsActive()) {
-			Standard_Integer aWidth=0, aHeight=0, anOffset=0;
-			m_view->Window()->Size(aWidth,aHeight);
-			aViewer->SetRectangularGridGraphicValues(aWidth,aHeight,anOffset);
-			aViewer->Update();
-		}
+			Handle(V3d_Viewer) aViewer = m_view->Viewer();
+			if (aViewer->IsActive()) {
+				Standard_Integer aWidth=0, aHeight=0, anOffset=0;
+				m_view->Window()->Size(aWidth,aHeight);
+				aViewer->SetRectangularGridGraphicValues(aWidth,aHeight,anOffset);
+				aViewer->Update();
+			}
 	}
 }
 void CChildView::OnReset()
@@ -295,7 +297,7 @@ void CChildView::OnDrawSolid()
 	if (m_view->ComputedMode()) {
 		SetCursor(AfxGetApp()->LoadCursor(IDC_WAIT));
 		m_view->SetComputedMode(Standard_False);
-		SetCursor(AfxGetApp()->LoadCursor(IDC_WAIT));
+		SetCursor(AfxGetApp()->LoadCursor(IDC_ARROW));
 	}
 }
 
@@ -305,7 +307,7 @@ void CChildView::OnDrawWire()
 	if (!m_view->ComputedMode()) {
 		SetCursor(AfxGetApp()->LoadCursor(IDC_WAIT));
 		m_view->SetComputedMode(Standard_True);
-		SetCursor(AfxGetApp()->LoadCursor(IDC_WAIT));
+		SetCursor(AfxGetApp()->LoadCursor(IDC_ARROW));
 	}
 }
 
@@ -315,7 +317,7 @@ void CChildView::OnDrawBoundingBox()
 	if (!m_view->ComputedMode()) {
 		SetCursor(AfxGetApp()->LoadCursor(IDC_WAIT));
 		m_view->SetComputedMode(2);
-		SetCursor(AfxGetApp()->LoadCursor(IDC_WAIT));
+		SetCursor(AfxGetApp()->LoadCursor(IDC_ARROW));
 	}
 }
 
