@@ -113,6 +113,10 @@ int CChildView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (!aWNTWindow->IsMapped())
 		aWNTWindow->Map();
 
+	Handle(AIS_InteractiveContext) m_context = ((CMCApp*)AfxGetApp())->GetAISContext();
+	m_context->OpenLocalContext();
+	//m_context->ActivateStandardMode(TopAbs_FACE);
+
 	ShowGrid();
 	Reset();
 	return 0;
@@ -144,12 +148,16 @@ void CChildView::OnLButtonUp(UINT nFlags, CPoint point)
 		else
 			context->Select();
 
+		
+		
 		context->InitSelected();
 		if (context->MoreSelected()) {
-			TopoDS_Solid solid = TopoDS::Solid(context->SelectedShape());
-			context->OpenLocalContext();
-			context->Activate(context->Current(), 4);
+			Handle(AIS_Shape) aisShape = Handle(AIS_Shape)::DownCast(context->SelectedInteractive());
+			//TopoDS_Solid solid = TopoDS::Solid(context->SelectedShape());
+			//context->OpenLocalContext();
+			//context->Activate(context->Current(), 4);
 		}
+		
 	}
 	m_shouldRotate = FALSE;
 }
