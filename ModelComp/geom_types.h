@@ -19,6 +19,17 @@
 #include <Geom_BoundedSurface.hxx>
 #include <Geom_Point.hxx>
 #include <Geom_Plane.hxx>
+#include <Geom_Surface.hxx>
+#include <Geom_Ellipse.hxx>
+#include <Geom_Line.hxx>
+
+#include <GeomAdaptor.hxx>
+#include <GeomAdaptor_Curve.hxx>
+#include <GeomAdaptor_GHCurve.hxx>
+#include <GeomAdaptor_GHSurface.hxx>
+#include <GeomAdaptor_HCurve.hxx>
+#include <GeomAdaptor_HSurface.hxx>
+#include <GeomAdaptor_Surface.hxx>
 
 
 #endif	/* GEOM_LIB_H */

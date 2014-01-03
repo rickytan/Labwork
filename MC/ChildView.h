@@ -29,6 +29,7 @@ public:
 	virtual ~CChildView();
 	Handle(V3d_View) GetV3dView() { return m_view; }
 	void Reset();
+	void ShowGrid(Standard_Boolean show = Standard_True);
 
 	// 生成的消息映射函数
 protected:

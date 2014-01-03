@@ -175,7 +175,8 @@ void CMainFrame::OnFileOpen()
 
 		m_rootTopoShape = reader.Shape();// reader.OneShape();
 		if (!m_rootTopoShape.IsNull()) {
-
+			if (m_context->HasOpenedContext())
+				m_context->CloseAllContexts();
 			m_context->RemoveAll();
 			TopAbs_ShapeEnum shapeType = m_rootTopoShape.ShapeType();
 			if (shapeType == TopAbs_COMPOUND) {
@@ -197,10 +198,17 @@ void CMainFrame::OnFileOpen()
 				for (TopExp_Explorer solidExp(m_rootTopoShape, TopAbs_SOLID); solidExp.More(); solidExp.Next(), ++i)
 				{
 					TopoDS_Shape solid = TopoDS::Solid(solidExp.Current());
+					for (TopExp_Explorer faceExp(solid, TopAbs_FACE); faceExp.More(); faceExp.Next())
+					{
+						//Geom_BezierSurface 
+						//Geom_Geometry *g;
+						//g->GetType();
+					}
 					Handle(AIS_Shape) aisShape = new AIS_Shape(solid);
 					m_context->SetDisplayMode(aisShape, 1, Standard_False);
 					m_context->Display(aisShape, Standard_False);
-					m_context->SetSelectionMode(aisShape, 0);
+					m_context->SetSelectionMode(aisShape, AIS_Shape::SelectionMode(TopAbs_WIRE));
+					
 					m_context->SetWidth(aisShape, 2, Standard_False);
 					m_context->SetMaterial(aisShape, Graphic3d_NOM_PLASTIC, Standard_False);
 					m_context->SetColor(aisShape, colors[i % (sizeof(colors) / sizeof(Quantity_NameOfColor))], Standard_False);
@@ -216,7 +224,8 @@ void CMainFrame::OnFileOpen()
 				m_context->SetSelectionMode(m_rootAISShape, 4);
 				m_context->SetHilightColor(Quantity_NOC_LIGHTBLUE);
 			}
-
+			m_context->OpenLocalContext();
+			m_context->ActivateStandardMode(TopAbs_FACE);
 			SetCursor(AfxGetApp()->LoadStandardCursor(IDC_ARROW));
 		}
 		else {

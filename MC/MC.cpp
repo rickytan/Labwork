@@ -50,6 +50,7 @@ CMCApp::CMCApp()
 
 		m_context = new AIS_InteractiveContext(m_viewer);
 		m_context->SetDeviationCoefficient(0.0008);
+		
 	}
 	catch (Standard_Failure e)
 	{

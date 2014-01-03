@@ -180,6 +180,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\geom_api.h"
+				>
+			</File>
+			<File
 				RelativePath=".\geom_func.h"
 				>
 			</File>

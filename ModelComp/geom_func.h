@@ -8,6 +8,9 @@
 #ifndef GEOM_FUNC_H
 #define	GEOM_FUNC_H
 
+#include "geom_api.h"
+
+
 #include <GC_MakeArcOfCircle.hxx>
 #include <GC_MakeArcOfEllipse.hxx>
 #include <GC_MakeArcOfHyperbola.hxx>

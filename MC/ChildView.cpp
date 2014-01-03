@@ -61,6 +61,23 @@ void CChildView::Reset()
 	m_view->ZFitAll();
 }
 
+void CChildView::ShowGrid(Standard_Boolean show)
+{
+	Handle(V3d_Viewer) aViewer = m_view->Viewer();
+	if (show) {
+		Handle(Graphic3d_AspectMarker3d) aGridAspect = new Graphic3d_AspectMarker3d(Aspect_TOM_BALL,Quantity_NOC_WHITE,4);
+		aViewer->SetGridEcho(aGridAspect);
+		Standard_Integer aWidth=0, aHeight=0, anOffset=0;
+		m_view->Window()->Size(aWidth,aHeight);
+		aViewer->SetRectangularGridGraphicValues(aWidth,aHeight,anOffset);
+		aViewer->ActivateGrid(Aspect_GT_Rectangular, Aspect_GDM_Lines);
+	}
+	else
+	{
+		aViewer->DeactivateGrid();
+		aViewer->Update();
+	}
+}
 
 // CChildView 消息处理程序
 
@@ -95,6 +112,7 @@ int CChildView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (!aWNTWindow->IsMapped())
 		aWNTWindow->Map();
 
+	ShowGrid();
 	Reset();
 	return 0;
 }
@@ -128,7 +146,7 @@ void CChildView::OnLButtonUp(UINT nFlags, CPoint point)
 	if (context->MoreSelected()) {
 		TopoDS_Solid solid = TopoDS::Solid(context->SelectedShape());
 		context->OpenLocalContext();
-		context->Activate(context->Current(), 2);
+		context->Activate(context->Current(), 4);
 	}
 
 	m_shouldRotate = FALSE;
@@ -255,6 +273,14 @@ void CChildView::OnSize(UINT nType, int cx, int cy)
 
 		if (!m_view.IsNull())
 			m_view->MustBeResized();
+
+		Handle(V3d_Viewer) aViewer = m_view->Viewer();
+		if (aViewer->IsActive()) {
+			Standard_Integer aWidth=0, aHeight=0, anOffset=0;
+			m_view->Window()->Size(aWidth,aHeight);
+			aViewer->SetRectangularGridGraphicValues(aWidth,aHeight,anOffset);
+			aViewer->Update();
+		}
 	}
 }
 void CChildView::OnReset()
