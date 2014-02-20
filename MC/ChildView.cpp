@@ -135,6 +135,13 @@ void CChildView::OnMButtonUp(UINT nFlags, CPoint point)
 
 }
 
+//#include <TDF_Label.hxx>
+//#include <TDF_Attribute.hxx>
+//#include <TDataStd_Integer.hxx>
+//#include <TDocStd_Application.hxx>
+//#include <TDocStd_Document.hxx>
+
+
 void CChildView::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	//V3d_View *m_view;
@@ -149,10 +156,17 @@ void CChildView::OnLButtonUp(UINT nFlags, CPoint point)
 			context->Select();
 
 		
-		
 		context->InitSelected();
 		if (context->MoreSelected()) {
 			Handle(AIS_Shape) aisShape = Handle(AIS_Shape)::DownCast(context->SelectedInteractive());
+			//gp_Trsf location = aisShape.Location();
+			AIS_Shape *a;
+			
+			gp_Trsf trans;
+			trans.SetTranslation(gp_Pnt(), gp_Pnt(0,5,0));
+			aisShape->SetLocation(trans);
+			aisShape->UpdateLocation();
+			m_view->Redraw();
 			//TopoDS_Solid solid = TopoDS::Solid(context->SelectedShape());
 			//context->OpenLocalContext();
 			//context->Activate(context->Current(), 4);
