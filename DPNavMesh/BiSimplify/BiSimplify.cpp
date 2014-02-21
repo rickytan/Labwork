@@ -2,8 +2,6 @@
 //
 
 #pragma warning(disable:4819)
-
-#include "stdafx.h"
 #include "mesh.h"
 
 
@@ -22,7 +20,7 @@ int main(int argc, char* argv[])
 		printf("Unable to open mesh %s : '%s'\n", mesh_file, vcg::tri::io::Importer<Mesh>::ErrorMsg(error));
 		exit(-1);
 	}
-	printf("Mesh loaded with Vertex: %d\tFace: %d", mesh.vn, mesh.fn);
+	printf("Mesh loaded with Vertex: %d\tFace: %d\n\n", mesh.vn, mesh.fn);
 
 	vcg::tri::TriEdgeCollapseQuadricParameter params;
 	params.QualityThr = .3;
