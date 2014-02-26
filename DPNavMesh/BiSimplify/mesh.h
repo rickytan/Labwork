@@ -37,7 +37,7 @@ class Vertex;
 class Edge;
 class Face;
 
-struct UsedTypes: public vcg::UsedTypes<
+class UsedTypes: public vcg::UsedTypes<
 	vcg::Use<Vertex>::AsVertexType,
 	vcg::Use<Edge>::AsEdgeType,
 	vcg::Use<Face>::AsFaceType

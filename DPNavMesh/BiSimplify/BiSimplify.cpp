@@ -4,6 +4,15 @@
 #pragma warning(disable:4819)
 #include "mesh.h"
 
+void Simplify(
+	__in const Mesh &mesh_in,
+	__out Mesh &mesh_out,
+	__in const int final_face = 1000,
+	__in const float quality = 0.3f)
+{
+
+
+}
 
 int main(int argc, char* argv[])
 {
@@ -11,7 +20,7 @@ int main(int argc, char* argv[])
 
 	char *mesh_file	= "bunny_closed.obj";
 	char *out_file	= "bunny_out.obj";
-	int final_size	= 1000;
+	int final_size	= 100;
 
 	printf("Loading %s\n", mesh_file);
 	int error = vcg::tri::io::Importer<Mesh>::Open(mesh, mesh_file);
