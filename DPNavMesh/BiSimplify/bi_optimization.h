@@ -1,84 +1,22 @@
 
-
 #ifndef __BI_OPTIMIZATION
 #define __BI_OPTIMIZATION
+
 #include<vector>
 #include<algorithm>
 #include<time.h>
 #include<math.h>
 #include<vcg/complex/complex.h>
 
+#include <vcg/complex/algorithms/local_optimization.h>
+
 namespace vcg{
-	// Base class for Parameters
-	// all parameters must be derived from this.
-	class BaseParameterClass { };
-
-	template<class MeshType>
-	class BiOptimization;
-
-	enum ModifierType{	TetraEdgeCollapseOp, TriEdgeSwapOp, TriVertexSplitOp,
-		TriEdgeCollapseOp,TetraEdgeSpliOpt,TetraEdgeSwapOp, TriEdgeFlipOp,
-		QuadDiagCollapseOp, QuadEdgeCollapseOp};
-	/** \addtogroup tetramesh */
-	/*@{*/
-	/// This abstract class define which functions  a local modification to be used in the LocalOptimization.
-	template <class MeshType>
-	class BiModification
-	{
-	public:
-		typedef typename BiOptimization<MeshType>::HeapType HeapType;
-		typedef typename MeshType::ScalarType ScalarType;
-
-
-		inline BiModification(){}
-		virtual ~BiModification(){}
-
-		/// return the type of operation
-		virtual ModifierType IsOfType() = 0 ;
-
-		/// return true if the data have not changed since it was created
-		virtual bool IsUpToDate() const = 0 ;
-
-		/// return true if no constraint disallow this operation to be performed (ex: change of topology in edge collapses)
-		virtual bool IsFeasible(BaseParameterClass *pp) = 0;
-
-		/// Compute the priority to be used in the heap
-		virtual ScalarType ComputePriority(BaseParameterClass *pp)=0;
-
-		/// Return the priority to be used in the heap (implement static priority)
-		virtual ScalarType Priority() const =0;
-
-		/// Perform the operation
-		virtual void Execute(MeshType &m, BaseParameterClass *pp)=0;
-
-		/// perform initialization
-		static void Init(MeshType &m, HeapType&, BaseParameterClass *pp);
-
-		/// An approximation of the size of the heap with respect of the number of simplex
-		/// of the mesh. When this number is exceeded a clear heap purging is performed. 
-		/// so it is should be reasonably larger than the minimum expected size to avoid too frequent clear heap
-		/// For example for symmetric edge collapse a 5 is a good guess. 
-		/// while for non symmetric edge collapse a larger number like 9 is a better choice
-		static float HeapSimplexRatio(BaseParameterClass *) {return 6.0f;}
-
-		virtual const char *Info(MeshType &) {return 0;}
-		/// Update the heap as a consequence of this operation
-		virtual void UpdateHeap(HeapType&, BaseParameterClass *pp)=0;
-	};	//end class local modification
-
-
-	/// LocalOptimization:
-	/// This class implements the algorihms running on 0-1-2-3-simplicial complex that are based on local modification
-	/// The local modification can be and edge_collpase, or an edge_swap, a vertex plit...as far as they implement
-	/// the interface defined in LocalModification.
-	/// Implementation note: in order to keep the local modification itself indepented by its use in this class, they are not
-	/// really derived by LocalModification. Instead, a wrapper is done to this purpose (see vcg/complex/tetramesh/decimation/collapse.h)
 
 	template<class MeshType>
 	class BiOptimization
 	{
 	public:
-		BiOptimization(MeshType &mm, BaseParameterClass *_pp): m(mm){ ClearTermination();e=0.0;HeapSimplexRatio=5; pp=_pp;}
+		BiOptimization(MeshType &_m0, MeshType &_m1, BaseParameterClass *_pp): m0(_m0), m1(_m1) { ClearTermination();e=0.0;HeapSimplexRatio=5; pp=_pp;}
 
 		struct  HeapElem;
 		// scalar type
@@ -86,9 +24,9 @@ namespace vcg{
 		// type of the heap
 		typedef typename std::vector<HeapElem> HeapType;	
 		// modification type	
-		typedef  BiModification <MeshType>  LocModType;
+		typedef  LocalModification <MeshType>  LocModType;
 		// modification Pointer type	
-		typedef  BiModification <MeshType> * LocModPtrType;
+		typedef  LocalModification <MeshType> * LocModPtrType;
 
 
 
@@ -139,13 +77,13 @@ namespace vcg{
 			timeBudget=0;
 			nTargetVertices=0;
 		}
-		/// the mesh to optimize
-		MeshType & m;
+		/// the two corresponding meshes to optimize
+		MeshType & m0, & m1;
 
 
 
 		///the heap of operations
-		HeapType h;
+		HeapType h0, h1;
 
 		///the element of the heap
 		// it is just a wrapper of the pointer to the localMod. 
@@ -187,8 +125,13 @@ namespace vcg{
 		/// Default distructor
 		~BiOptimization(){ 
 			typename HeapType::iterator i;
-			for(i = h.begin(); i != h.end(); i++)
+			for(i = h0.begin(); i != h0.end(); i++)
 				delete (*i).locModPtr;
+			for (i = h1.begin(); i != h1.end(); ++i)
+			{
+				delete (*i).locModPtr;
+			}
+			
 		};
 
 		double e;
@@ -198,13 +141,13 @@ namespace vcg{
 		{
 			start=clock();
 			nPerfmormedOps =0;
-			while( !GoalReached() && !h.empty())
+			while( !GoalReached() && !h0.empty())
 			{
-				if(h.size()> m.SimplexNumber()*HeapSimplexRatio )  ClearHeap();
-				std::pop_heap(h.begin(),h.end());
-				LocModPtrType  locMod   = h.back().locModPtr;
-				currMetric=h.back().pri;
-				h.pop_back();
+				if(h0.size()> m.SimplexNumber()*HeapSimplexRatio )  ClearHeap();
+				std::pop_heap(h0.begin(),h0.end());
+				LocModPtrType  locMod   = h0.back().locModPtr;
+				currMetric=h0.back().pri;
+				h0.pop_back();
 
 				if( locMod->IsUpToDate() )
 				{	
@@ -214,13 +157,13 @@ namespace vcg{
 					{
 						nPerfmormedOps++;
 						locMod->Execute(m,this->pp);
-						locMod->UpdateHeap(h,this->pp);
+						locMod->UpdateHeap(h0,this->pp);
 					}
 				}
 				//else printf("popped out unfeasible\n");
 				delete locMod;
 			}
-			return !(h.empty());
+			return !(h0.empty());
 		}
 
 		// It removes from the heap all the operations that are no more 'uptodate' 
@@ -230,25 +173,25 @@ namespace vcg{
 		{
 			typename HeapType::iterator hi;
 			//int sz=h.size();
-			for(hi=h.begin();hi!=h.end();)
+			for(hi=h0.begin();hi!=h0.end();)
 			{
 				if(!(*hi).locModPtr->IsUpToDate())
 				{
 					delete (*hi).locModPtr;
-					*hi=h.back();
-					if(&*hi==&h.back()) 
+					*hi=h0.back();
+					if(&*hi==&h0.back()) 
 					{
-						hi=h.end();
-						h.pop_back();
+						hi=h0.end();
+						h0.pop_back();
 						break;
 					}
-					h.pop_back();
+					h0.pop_back();
 					continue;
 				}
 				++hi;
 			}
 			//qDebug("\nReduced heap from %7i to %7i (fn %7i) ",sz,h.size(),m.fn);
-			make_heap(h.begin(),h.end());
+			make_heap(h0.begin(),h0.end());
 		}
 
 		///initialize for all vertex the temporary mark must call only at the start of decimation
@@ -256,20 +199,21 @@ namespace vcg{
 		///of local modification. 
 		template <class LocalModificationType> void Init()
 		{
-			vcg::tri::InitVertexIMark(m);
+			vcg::tri::InitVertexIMark(m0);
+			vcg::tri::InitVertexIMark(m1);
 
 			// The expected size of heap depends on the type of the local modification we are using..
 			HeapSimplexRatio = LocalModificationType::HeapSimplexRatio(pp);
 
-			LocalModificationType::Init(m,h,pp);
-			std::make_heap(h.begin(),h.end());
-			if(!h.empty()) currMetric=h.front().pri;
+			LocalModificationType::Init(m0,h0,pp);
+			std::make_heap(h0.begin(),h0.end());
+			if(!h0.empty()) currMetric=h0.front().pri;
 		}
 
 
 		template <class LocalModificationType> void Finalize()
 		{
-			LocalModificationType::Finalize(m,h,pp);
+			LocalModificationType::Finalize(m,h0,pp);
 		}
 
 
@@ -303,15 +247,15 @@ namespace vcg{
 		void ClearHeapOld()
 		{
 			typename HeapType::iterator hi;
-			for(hi=h.begin();hi!=h.end();++hi)
+			for(hi=h0.begin();hi!=h0.end();++hi)
 				if(!(*hi).locModPtr->IsUpToDate())
 				{
-					*hi=h.back();
-					h.pop_back();
-					if(hi==h.end()) break;
+					*hi=h0.back();
+					h0.pop_back();
+					if(hi==h0.end()) break;
 				}
 				//printf("\nReduced heap from %i to %i",sz,h.size());
-				make_heap(h.begin(),h.end());
+				make_heap(h0.begin(),h0.end());
 		}
 
 	};//end class decimation

@@ -32,6 +32,10 @@
 #include <vcg/complex/algorithms/local_optimization.h>
 #include <vcg/complex/algorithms/local_optimization/tri_edge_collapse_quadric.h>
 
+// My Implement
+#include "bi_tri_edge_collapse_quadric.h"
+#include "bi_optimization.h"
+
 
 class Vertex;
 class Edge;
@@ -84,8 +88,18 @@ public:
 		TriEdgeCollapse,
 		vcg::tri::QInfoStandard<Vertex>
 		> (p, i, pp) {}
+
 };
 
-
+class MyTriEdgeCollapse: public vcg::tri::BiTriEdgeCollapse<
+	Mesh, 
+	MyTriEdgeCollapse
+> {
+public:
+	MyTriEdgeCollapse(const VertexPair &p, int i, vcg::BaseParameterClass *pp): vcg::tri::BiTriEdgeCollapse<
+		Mesh,
+		MyTriEdgeCollapse
+	> (p, i, pp) {}
+};
 
 #endif

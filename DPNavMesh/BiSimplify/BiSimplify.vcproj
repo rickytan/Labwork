@@ -189,6 +189,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bi_tri_edge_collapse_quadric.h"
+				>
+			</File>
+			<File
 				RelativePath=".\mesh.h"
 				>
 			</File>
