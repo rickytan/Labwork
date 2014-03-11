@@ -56,10 +56,21 @@ class Vertex: public vcg::Vertex<
 	vcg::vertex::BitFlags
 > {
 public:
+	Vertex(): vcg::Vertex<
+		UsedTypes,
+		vcg::vertex::VFAdj,
+		vcg::vertex::Coord3f,
+		vcg::vertex::Normal3f,
+		vcg::vertex::Mark,
+		vcg::vertex::BitFlags
+	> (), _cv(NULL) {}
 	vcg::math::Quadric<double> &Qd() {return q;}
+	Vertex *&Cv() {return _cv;}
 
 private:
 	vcg::math::Quadric<double> q;
+	// the Corresponding vertex on the other mesh
+	Vertex *_cv;
 };
 
 class Edge: public vcg::Edge<UsedTypes> {};

@@ -7,10 +7,30 @@
 #include<time.h>
 #include<math.h>
 #include<vcg/complex/complex.h>
-
+#include <vcg/space/index/kdtree/kdtree.h>
 #include <vcg/complex/algorithms/local_optimization.h>
 
 namespace vcg{
+
+	template<class MeshType>
+	class Vertex2dConstDataWrapper :public ConstDataWrapper<typename MeshType::CoordType>
+	{
+	public:
+		inline Vertex2dConstDataWrapper(MeshType &m):
+		ConstDataWrapper<typename MeshType::CoordType> ( NULL, m.vert.size(), sizeof(typename MeshType::CoordType))
+		{
+			DataType *data = new DataType(m.vert.size());
+			for (in i=0; i<m.VN();++i)
+			{
+				data[i][0] = m.vert[i][0];
+				data[i][1] = m.vert[i][1];
+				data[i][2] = 0;
+			}
+			mpData = data;
+		}
+		~Vertex2dConstDataWrapper() {delete mpData;}
+	};
+
 
 	template<class MeshType>
 	class BiOptimization
@@ -18,9 +38,11 @@ namespace vcg{
 	public:
 		BiOptimization(MeshType &_m0, MeshType &_m1, BaseParameterClass *_pp): m0(_m0), m1(_m1) { ClearTermination();e=0.0;HeapSimplexRatio=5; pp=_pp;}
 
-		struct  HeapElem;
+		typedef LocalOptimization::HeapElem HeapElem;
 		// scalar type
 		typedef typename MeshType::ScalarType ScalarType;
+		// coord type
+		typedef typename MeshType::CoordType CoodType;
 		// type of the heap
 		typedef typename std::vector<HeapElem> HeapType;	
 		// modification type	
@@ -28,16 +50,8 @@ namespace vcg{
 		// modification Pointer type	
 		typedef  LocalModification <MeshType> * LocModPtrType;
 
-
-
 		/// termination conditions	
-		enum LOTermination {	
-			LOnSimplices	= 0x01,	// test number of simplicies	
-			LOnVertices		= 0x02, // test number of verticies
-			LOnOps			= 0x04, // test number of operations
-			LOMetric		= 0x08, // test Metric (error, quality...instance dependent)
-			LOTime			= 0x10  // test how much time is passed since the start
-		} ;
+		typedef LocalOptimization::LOTermination LOTermination;
 
 		int tf;
 
@@ -80,47 +94,7 @@ namespace vcg{
 		/// the two corresponding meshes to optimize
 		MeshType & m0, & m1;
 
-
-
-		///the heap of operations
 		HeapType h0, h1;
-
-		///the element of the heap
-		// it is just a wrapper of the pointer to the localMod. 
-		// std heap does not work for
-		// pointers and we want pointers to have heterogenous heaps. 
-
-		struct HeapElem
-		{
-			inline HeapElem(){locModPtr = NULL;}
-			~HeapElem(){}
-
-			///pointer to instance of local modifier
-			LocModPtrType locModPtr;
-			float pri;
-
-
-			inline HeapElem( LocModPtrType _locModPtr)
-			{
-				locModPtr = _locModPtr;
-				pri=float(locModPtr->Priority());
-			};
-
-			/// STL heap has the largest element as the first one.
-			/// usually we mean priority as an error so we should invert the comparison
-			inline bool operator <(const HeapElem & h) const
-			{ 
-				return (pri > h.pri);
-				//return (locModPtr->Priority() < h.locModPtr->Priority());
-			}
-
-			bool IsUpToDate() const
-			{
-				return locModPtr->IsUpToDate();
-			}
-		};
-
-
 
 		/// Default distructor
 		~BiOptimization(){ 
@@ -131,7 +105,7 @@ namespace vcg{
 			{
 				delete (*i).locModPtr;
 			}
-			
+
 		};
 
 		double e;
@@ -206,8 +180,13 @@ namespace vcg{
 			HeapSimplexRatio = LocalModificationType::HeapSimplexRatio(pp);
 
 			LocalModificationType::Init(m0,h0,pp);
+			LocalModificationType::Init(m1,h1,pp);
+
 			std::make_heap(h0.begin(),h0.end());
-			if(!h0.empty()) currMetric=h0.front().pri;
+			std::make_heap(h1.begin(),h1.end());
+
+			if(!h0.empty())
+				currMetric=h0.front().pri;
 		}
 
 
@@ -256,6 +235,26 @@ namespace vcg{
 				}
 				//printf("\nReduced heap from %i to %i",sz,h.size());
 				make_heap(h0.begin(),h0.end());
+		}
+
+	private:
+		void FindCorresponding()
+		{
+			Vertex2dConstDataWrapper<MeshType> dw(m0);
+			KdTree<ScalarType> tree(dw);
+			tree.setMaxNofNeighbors(1);
+
+			for (int i=0;i<m1.VN();++i)
+			{
+				CoordType location = m1.vert[i].cP();
+				location[2] = 0;
+				tree.doQueryK(location);
+				int neighbor = tree.getNeighborId(0);
+
+				m1.vert[i].Cv() = &(m0.vert[neighbor]);
+				m0.vert[neighbor].Cv() = &(m1.vert[i]);
+			}
+			
 		}
 
 	};//end class decimation
