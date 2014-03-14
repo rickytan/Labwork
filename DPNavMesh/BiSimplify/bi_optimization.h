@@ -255,12 +255,11 @@ namespace vcg{
 		{
 			Vertex2dConstDataWrapper<MeshType> dw(m0);
 			KdTree<ScalarType> tree(dw);
-			tree.setMaxNofNeighbors(3);
+			tree.setMaxNofNeighbors(1);
 
 			for (unsigned int i=0;i<m1.vert.size();++i)
 			{
 				CoordType location = m1.vert[i].cP();
-				printf("(%f, %f, %f)\n", location[0], location[1], location[2]);
 				location[2] = 0;
 				tree.doQueryK(location);
 				int neighbor = tree.getNeighborId(0);
