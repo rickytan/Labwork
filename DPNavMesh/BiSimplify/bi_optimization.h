@@ -19,16 +19,17 @@ namespace vcg{
 		inline Vertex2dConstDataWrapper(MeshType &m):
 		ConstDataWrapper<typename MeshType::CoordType> ( NULL, m.vert.size(), sizeof(typename MeshType::CoordType))
 		{
-			DataType *data = new DataType(m.vert.size());
-			for (in i=0; i<m.VN();++i)
+			DataType *data = new DataType[m.vert.size()];
+			unsigned int idx = 0;
+			for (MeshType::VertexIterator vi = m.vert.begin(); vi != m.vert.end(); ++vi, ++idx)
 			{
-				data[i][0] = m.vert[i][0];
-				data[i][1] = m.vert[i][1];
-				data[i][2] = 0;
+				data[idx] = vi->cP();
+				data[idx][2] = 0.0;
 			}
-			mpData = data;
+			mpData = reinterpret_cast<const unsigned char*>(data);
 		}
-		~Vertex2dConstDataWrapper() {delete mpData;}
+		~Vertex2dConstDataWrapper() {delete[] mpData;}
+
 	};
 
 
@@ -38,11 +39,11 @@ namespace vcg{
 	public:
 		BiOptimization(MeshType &_m0, MeshType &_m1, BaseParameterClass *_pp): m0(_m0), m1(_m1) { ClearTermination();e=0.0;HeapSimplexRatio=5; pp=_pp;}
 
-		typedef LocalOptimization::HeapElem HeapElem;
+		typedef typename LocalOptimization<MeshType>::HeapElem HeapElem;
 		// scalar type
 		typedef typename MeshType::ScalarType ScalarType;
 		// coord type
-		typedef typename MeshType::CoordType CoodType;
+		typedef typename MeshType::CoordType CoordType;
 		// type of the heap
 		typedef typename std::vector<HeapElem> HeapType;	
 		// modification type	
@@ -51,7 +52,13 @@ namespace vcg{
 		typedef  LocalModification <MeshType> * LocModPtrType;
 
 		/// termination conditions	
-		typedef LocalOptimization::LOTermination LOTermination;
+		enum LOTermination {	
+			LOnSimplices	= 0x01,	// test number of simplicies	
+			LOnVertices		= 0x02, // test number of verticies
+			LOnOps			= 0x04, // test number of operations
+			LOMetric		= 0x08, // test Metric (error, quality...instance dependent)
+			LOTime			= 0x10  // test how much time is passed since the start
+		} ;
 
 		int tf;
 
@@ -117,7 +124,8 @@ namespace vcg{
 			nPerfmormedOps =0;
 			while( !GoalReached() && !h0.empty())
 			{
-				if(h0.size()> m.SimplexNumber()*HeapSimplexRatio )  ClearHeap();
+				if(h0.size()> m0.SimplexNumber()*HeapSimplexRatio ) 
+					ClearHeap();
 				std::pop_heap(h0.begin(),h0.end());
 				LocModPtrType  locMod   = h0.back().locModPtr;
 				currMetric=h0.back().pri;
@@ -130,7 +138,7 @@ namespace vcg{
 					if (locMod->IsFeasible(this->pp))
 					{
 						nPerfmormedOps++;
-						locMod->Execute(m,this->pp);
+						locMod->Execute(m0,this->pp);
 						locMod->UpdateHeap(h0,this->pp);
 					}
 				}
@@ -171,8 +179,11 @@ namespace vcg{
 		///initialize for all vertex the temporary mark must call only at the start of decimation
 		///by default it takes the first element in the heap and calls Init (static funcion) of that type
 		///of local modification. 
-		template <class LocalModificationType> void Init()
+		template <class LocalModificationType>
+		void Init()
 		{
+			FindCorresponding();
+
 			vcg::tri::InitVertexIMark(m0);
 			vcg::tri::InitVertexIMark(m1);
 
@@ -185,12 +196,14 @@ namespace vcg{
 			std::make_heap(h0.begin(),h0.end());
 			std::make_heap(h1.begin(),h1.end());
 
+
 			if(!h0.empty())
 				currMetric=h0.front().pri;
 		}
 
 
-		template <class LocalModificationType> void Finalize()
+		template <class LocalModificationType>
+		void Finalize()
 		{
 			LocalModificationType::Finalize(m,h0,pp);
 		}
@@ -242,19 +255,23 @@ namespace vcg{
 		{
 			Vertex2dConstDataWrapper<MeshType> dw(m0);
 			KdTree<ScalarType> tree(dw);
-			tree.setMaxNofNeighbors(1);
+			tree.setMaxNofNeighbors(3);
 
-			for (int i=0;i<m1.VN();++i)
+			for (unsigned int i=0;i<m1.vert.size();++i)
 			{
 				CoordType location = m1.vert[i].cP();
+				printf("(%f, %f, %f)\n", location[0], location[1], location[2]);
 				location[2] = 0;
 				tree.doQueryK(location);
 				int neighbor = tree.getNeighborId(0);
 
-				m1.vert[i].Cv() = &(m0.vert[neighbor]);
-				m0.vert[neighbor].Cv() = &(m1.vert[i]);
+				const CoordType loc = m0.vert[neighbor].cP();
+				if (fabs(loc[0] - location[0]) < std::numeric_limits<ScalarType>::epsilon() &&
+					fabs(loc[1] - location[1]) < std::numeric_limits<ScalarType>::epsilon()) {
+						m1.vert[i].Cv() = &(m0.vert[neighbor]);
+						m0.vert[neighbor].Cv() = &(m1.vert[i]);
+				}
 			}
-			
 		}
 
 	};//end class decimation

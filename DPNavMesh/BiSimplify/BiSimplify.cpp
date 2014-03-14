@@ -102,8 +102,47 @@ void gui(int *argc, char *argv[])
 	glutMainLoop();
 }
 
+void load_mesh(Mesh &mesh, const char *mesh_file)
+{
+	printf("Loading mesh: %s...\n", mesh_file);
+	int errcode = vcg::tri::io::Importer<Mesh>::Open(mesh, mesh_file);
+	if (errcode) {
+		printf("Unable to load mesh %s: %s\n", mesh_file, vcg::tri::io::Importer<Mesh>::ErrorMsg(errcode));
+		exit(1);
+	}
+	printf("Mesh loaded with Vertex: %d\tFace: %d\n\n", mesh.vn, mesh.fn);
+}
+
+void test()
+{
+	const char *mesh_file0 = "face_mesh0.ply", *mesh_file1 = "face_mesh1.ply";
+	int final_size = 1000;
+	Mesh m0, m1;
+	
+	load_mesh(m0, mesh_file0);
+	load_mesh(m1, mesh_file1);
+
+	vcg::tri::TriEdgeCollapseQuadricParameter params;
+	params.QualityThr = .3;
+
+	vcg::tri::UpdateBounding<Mesh>::Box(m0);
+	vcg::tri::UpdateBounding<Mesh>::Box(m1);
+
+	vcg::BiOptimization<Mesh> bioptim(m0, m1, &params);
+	bioptim.Init<MyTriEdgeCollapse>();
+	bioptim.SetTargetSimplices(final_size);
+	
+	//while(bioptim.DoOptimization() && 
+	//	(m0.fn > final_size || m1.fn > final_size)) {
+
+	//}
+}
+
 int main(int argc, char* argv[])
 {
+	test();
+	return 0;
+
 	char *mesh_file	= "bunny_closed.obj";
 	char *out_file	= "bunny_out.obj";
 	int final_size	= 100;
