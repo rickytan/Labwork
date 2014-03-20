@@ -101,18 +101,13 @@ namespace vcg{
 		/// the two corresponding meshes to optimize
 		MeshType & m0, & m1;
 
-		HeapType h0, h1;
+		HeapType h;
 
 		/// Default distructor
 		~BiOptimization(){ 
 			typename HeapType::iterator i;
-			for(i = h0.begin(); i != h0.end(); i++)
+			for(i = h.begin(); i != h.end(); i++)
 				delete (*i).locModPtr;
-			for (i = h1.begin(); i != h1.end(); ++i)
-			{
-				delete (*i).locModPtr;
-			}
-
 		};
 
 		double e;
@@ -122,14 +117,14 @@ namespace vcg{
 		{
 			start=clock();
 			nPerfmormedOps =0;
-			while( !GoalReached() && !h0.empty())
+			while( !GoalReached() && !h.empty())
 			{
-				if(h0.size()> m0.SimplexNumber()*HeapSimplexRatio ) 
+				if(h.size()> m0.SimplexNumber()*HeapSimplexRatio ) 
 					ClearHeap();
-				std::pop_heap(h0.begin(),h0.end());
-				LocModPtrType  locMod   = h0.back().locModPtr;
-				currMetric=h0.back().pri;
-				h0.pop_back();
+				std::pop_heap(h.begin(),h.end());
+				LocModPtrType locMod	= h.back().locModPtr;
+				currMetric				= h.back().pri;
+				h.pop_back();
 
 				if( locMod->IsUpToDate() )
 				{	
@@ -138,14 +133,15 @@ namespace vcg{
 					if (locMod->IsFeasible(this->pp))
 					{
 						nPerfmormedOps++;
+						--corrCount;
 						locMod->Execute(m0,this->pp);
-						locMod->UpdateHeap(h0,this->pp);
+						locMod->UpdateHeap(h, this->pp);
 					}
 				}
 				//else printf("popped out unfeasible\n");
 				delete locMod;
 			}
-			return !(h0.empty());
+			return !(h.empty());
 		}
 
 		// It removes from the heap all the operations that are no more 'uptodate' 
@@ -155,26 +151,31 @@ namespace vcg{
 		{
 			typename HeapType::iterator hi;
 			//int sz=h.size();
-			for(hi=h0.begin();hi!=h0.end();)
+			for(hi=h.begin();hi!=h.end();)
 			{
 				if(!(*hi).locModPtr->IsUpToDate())
 				{
 					delete (*hi).locModPtr;
-					*hi=h0.back();
-					if(&*hi==&h0.back()) 
+					*hi=h.back();
+					if(&*hi==&h.back()) 
 					{
-						hi=h0.end();
-						h0.pop_back();
+						hi=h.end();
+						h.pop_back();
 						break;
 					}
-					h0.pop_back();
+					h.pop_back();
 					continue;
 				}
 				++hi;
 			}
 			//qDebug("\nReduced heap from %7i to %7i (fn %7i) ",sz,h.size(),m.fn);
-			make_heap(h0.begin(),h0.end());
+			make_heap(h.begin(),h.end());
 		}
+
+		typedef std::pair<typename MeshType::VertexType *, typename MeshType::VertexType *> CorresPair;
+		typedef std::vector<CorresPair> CorresPairContainer;
+
+		int corrCount;
 
 		///initialize for all vertex the temporary mark must call only at the start of decimation
 		///by default it takes the first element in the heap and calls Init (static funcion) of that type
@@ -182,7 +183,8 @@ namespace vcg{
 		template <class LocalModificationType>
 		void Init()
 		{
-			FindCorresponding();
+			CorresPairContainer cpc;
+			FindCorresponding(cpc);
 
 			vcg::tri::InitVertexIMark(m0);
 			vcg::tri::InitVertexIMark(m1);
@@ -190,15 +192,13 @@ namespace vcg{
 			// The expected size of heap depends on the type of the local modification we are using..
 			HeapSimplexRatio = LocalModificationType::HeapSimplexRatio(pp);
 
-			LocalModificationType::Init(m0,h0,pp);
-			LocalModificationType::Init(m1,h1,pp);
+			LocalModificationType::Init(m0,m1,h,pp);
+			//LocalModificationType::Init(m1,h1,pp);
 
-			std::make_heap(h0.begin(),h0.end());
-			std::make_heap(h1.begin(),h1.end());
+			std::make_heap(h.begin(),h.end());
 
-
-			if(!h0.empty())
-				currMetric=h0.front().pri;
+			if(!h.empty())
+				currMetric=h.front().pri;
 		}
 
 
@@ -218,8 +218,8 @@ namespace vcg{
 			assert ( ( ( tf & LOMetric		)==0) ||  ( targetMetric	!= -1));
 			assert ( ( ( tf & LOTime		)==0) ||  ( timeBudget		!= -1));
 
-			if ( IsTerminationFlag(LOnSimplices) &&	( m.SimplexNumber()<= nTargetSimplices)) return true;
-			if ( IsTerminationFlag(LOnVertices)  &&  ( m.VertexNumber() <= nTargetVertices)) return true;
+			if ( IsTerminationFlag(LOnSimplices) &&	( m0.SimplexNumber()<= nTargetSimplices)) return true;
+			if ( IsTerminationFlag(LOnVertices)  &&  ( corrCount <= nTargetVertices)) return true;
 			if ( IsTerminationFlag(LOnOps)		   && (nPerfmormedOps	== nTargetOps)) return true;
 			if ( IsTerminationFlag(LOMetric)		 &&  ( currMetric		> targetMetric)) return true;
 			if ( IsTerminationFlag(LOTime) )
@@ -251,7 +251,7 @@ namespace vcg{
 		}
 
 	private:
-		void FindCorresponding()
+		void FindCorresponding(CorresPairContainer &cpc)
 		{
 			Vertex2dConstDataWrapper<MeshType> dw(m0);
 			KdTree<ScalarType> tree(dw);
@@ -269,6 +269,7 @@ namespace vcg{
 					fabs(loc[1] - location[1]) < std::numeric_limits<ScalarType>::epsilon()) {
 						m1.vert[i].Cv() = &(m0.vert[neighbor]);
 						m0.vert[neighbor].Cv() = &(m1.vert[i]);
+						++corrCount;
 				}
 			}
 		}

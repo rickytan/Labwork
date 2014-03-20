@@ -84,7 +84,13 @@ class Face: public vcg::Face<
 
 typedef vcg::tri::BasicVertexPair<Vertex> VertexPair;
 
-class Mesh: public vcg::tri::TriMesh<std::vector<Vertex>, std::vector<Face>> {};
+class Mesh: public vcg::tri::TriMesh<std::vector<Vertex>, std::vector<Face>> {
+public:
+	Mesh(): vcg::tri::TriMesh<std::vector<Vertex>, std::vector<Face>>(), _cm(NULL) {}
+	Mesh *&Cm() { return _cm;}
+private:
+	Mesh *_cm;
+};
 
 class TriEdgeCollapse: public vcg::tri::TriEdgeCollapseQuadric<
 	Mesh,

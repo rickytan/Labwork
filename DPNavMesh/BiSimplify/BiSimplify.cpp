@@ -122,7 +122,10 @@ void test()
 	load_mesh(m0, mesh_file0);
 	load_mesh(m1, mesh_file1);
 
-	vcg::tri::TriEdgeCollapseQuadricParameter params;
+	m0.Cm() = &m1;
+	m1.Cm() = &m0;
+
+	vcg::tri::BiTriEdgeCollapseQuadricParameter<Mesh::CoordType> params;
 	params.QualityThr = .3;
 
 	vcg::tri::UpdateBounding<Mesh>::Box(m0);
@@ -132,10 +135,12 @@ void test()
 	bioptim.Init<MyTriEdgeCollapse>();
 	bioptim.SetTargetSimplices(final_size);
 	
-	//while(bioptim.DoOptimization() && 
-	//	(m0.fn > final_size || m1.fn > final_size)) {
+	while(bioptim.DoOptimization() && 
+		(m0.fn > final_size || m0.fn > final_size)) {
 
-	//}
+	}
+	vcg::tri::io::Exporter<Mesh>::Save(m0, "m0.ply");
+	vcg::tri::io::Exporter<Mesh>::Save(m1, "m1.ply");
 }
 
 int main(int argc, char* argv[])
