@@ -23,7 +23,7 @@ namespace vcg {
 			typedef typename MeshType::VertexType VertexType;
 		public:
 			inline BiVertexPair(): BasicVertexPair<VertexType>(), m(NULL) {}
-			//inline BiVertexPair( VertexType *v0, VertexType *v1): BasicVertexPair<VertexType>(v0, v1), m(NULL) {}
+			inline BiVertexPair( VertexType *v0, VertexType *v1): BasicVertexPair<VertexType>(v0, v1), m(NULL) {}
 			inline BiVertexPair( VertexType *v0, VertexType *v1, MeshType &mesh): BasicVertexPair<VertexType>(v0, v1), m(&mesh) {}
 			inline BiVertexPair( VertexType *v0, VertexType *v1, MeshType *mesh): BasicVertexPair<VertexType>(v0, v1), m(mesh) {}
 			MeshType *m;
@@ -109,29 +109,29 @@ namespace vcg {
 					if( !(vfi.V1()->IsV()) && vfi.V1()->IsRW() && vfi.V1()->Cv())
 					{
 						vfi.V1()->SetV();
-						h_ret.push_back(HeapElem(new MYTYPE(VertexPair(vfi.V0(),vfi.V1()), this->GlobalMark(),_pp)));
+						h_ret.push_back(HeapElem(new MYTYPE(VertexPair(vfi.V0(),vfi.V1(),this->pos.m), this->GlobalMark(),_pp)));
 						std::push_heap(h_ret.begin(),h_ret.end());
 						if(!IsSymmetric(pp)){
-							h_ret.push_back(HeapElem(new MYTYPE(VertexPair(vfi.V1(),vfi.V0()), this->GlobalMark(),_pp)));
+							h_ret.push_back(HeapElem(new MYTYPE(VertexPair(vfi.V1(),vfi.V0(),this->pos.m), this->GlobalMark(),_pp)));
 							std::push_heap(h_ret.begin(),h_ret.end());
 						}
 					}
 					if(  !(vfi.V2()->IsV()) && vfi.V2()->IsRW() && vfi.V2()->Cv())
 					{
 						vfi.V2()->SetV();
-						h_ret.push_back(HeapElem(new MYTYPE(VertexPair(vfi.V0(),vfi.V2()),this->GlobalMark(),_pp)));
+						h_ret.push_back(HeapElem(new MYTYPE(VertexPair(vfi.V0(),vfi.V2(),this->pos.m),this->GlobalMark(),_pp)));
 						std::push_heap(h_ret.begin(),h_ret.end());
 						if(!IsSymmetric(pp)){
-							h_ret.push_back( HeapElem(new MYTYPE(VertexPair(vfi.V2(),vfi.V0()), this->GlobalMark(),_pp) )  );
+							h_ret.push_back( HeapElem(new MYTYPE(VertexPair(vfi.V2(),vfi.V0(),this->pos.m), this->GlobalMark(),_pp) )  );
 							std::push_heap(h_ret.begin(),h_ret.end());
 						}
 					}
 					if(pp->SafeHeapUpdate && vfi.V1()->IsRW() && vfi.V2()->IsRW() )
 					{
-						h_ret.push_back(HeapElem(new MYTYPE(VertexPair(vfi.V1(),vfi.V2()),this->GlobalMark(),_pp)));
+						h_ret.push_back(HeapElem(new MYTYPE(VertexPair(vfi.V1(),vfi.V2(),this->pos.m),this->GlobalMark(),_pp)));
 						std::push_heap(h_ret.begin(),h_ret.end());
 						if(!IsSymmetric(pp)){
-							h_ret.push_back(HeapElem(new MYTYPE(VertexPair(vfi.V2(),vfi.V1()), this->GlobalMark(),_pp)));
+							h_ret.push_back(HeapElem(new MYTYPE(VertexPair(vfi.V2(),vfi.V1(),this->pos.m), this->GlobalMark(),_pp)));
 							std::push_heap(h_ret.begin(),h_ret.end());
 						}
 					}

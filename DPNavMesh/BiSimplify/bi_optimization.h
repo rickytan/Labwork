@@ -119,7 +119,7 @@ namespace vcg{
 			nPerfmormedOps =0;
 			while( !GoalReached() && !h.empty())
 			{
-				if(h.size()> m0.SimplexNumber()*HeapSimplexRatio ) 
+				if(h.size()> corrCount*HeapSimplexRatio ) 
 					ClearHeap();
 				std::pop_heap(h.begin(),h.end());
 				LocModPtrType locMod	= h.back().locModPtr;
