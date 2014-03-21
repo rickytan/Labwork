@@ -37,7 +37,7 @@ namespace vcg{
 	class BiOptimization
 	{
 	public:
-		BiOptimization(MeshType &_m0, MeshType &_m1, BaseParameterClass *_pp): m0(_m0), m1(_m1) { ClearTermination();e=0.0;HeapSimplexRatio=5; pp=_pp;}
+		BiOptimization(MeshType &_m, BaseParameterClass *_pp): m(_m), corresVnum(0), corresFnum(0) { ClearTermination();e=0.0;HeapSimplexRatio=5; pp=_pp;}
 
 		typedef typename LocalOptimization<MeshType>::HeapElem HeapElem;
 		// scalar type
@@ -53,11 +53,11 @@ namespace vcg{
 
 		/// termination conditions	
 		enum LOTermination {	
-			LOnSimplices	= 0x01,	// test number of simplicies	
-			LOnVertices		= 0x02, // test number of verticies
-			LOnOps			= 0x04, // test number of operations
-			LOMetric		= 0x08, // test Metric (error, quality...instance dependent)
-			LOTime			= 0x10  // test how much time is passed since the start
+			LOnCorresSimplices	= 0x01,	// test number of simplicies	
+			LOnCorresVertices	= 0x02, // test number of verticies
+			LOnOps				= 0x04, // test number of operations
+			LOMetric			= 0x08, // test Metric (error, quality...instance dependent)
+			LOTime				= 0x10  // test how much time is passed since the start
 		} ;
 
 		int tf;
@@ -82,8 +82,8 @@ namespace vcg{
 		void ClearTerminationFlag	(int v){tf &= ~v;}
 		bool IsTerminationFlag		(int v){return ((tf & v)!=0);}
 
-		void SetTargetSimplices	(int ts			){nTargetSimplices	= ts;	SetTerminationFlag(LOnSimplices);	}	 	
-		void SetTargetVertices	(int tv			){nTargetVertices	= tv;	SetTerminationFlag(LOnVertices);	} 
+		void SetTargetSimplices	(int ts			){nTargetSimplices	= ts;	SetTerminationFlag(LOnCorresSimplices);	}	 	
+		void SetTargetVertices	(int tv			){nTargetVertices	= tv;	SetTerminationFlag(LOnCorresVertices);	} 
 		void SetTargetOperations(int to			){nTargetOps		= to;	SetTerminationFlag(LOnOps);			} 
 
 		void SetTargetMetric	(ScalarType tm	){targetMetric		= tm;	SetTerminationFlag(LOMetric);		} 
@@ -99,7 +99,7 @@ namespace vcg{
 			nTargetVertices=0;
 		}
 		/// the two corresponding meshes to optimize
-		MeshType & m0, & m1;
+		MeshType & m;
 
 		HeapType h;
 
@@ -119,7 +119,7 @@ namespace vcg{
 			nPerfmormedOps =0;
 			while( !GoalReached() && !h.empty())
 			{
-				if(h.size()> corrCount*HeapSimplexRatio ) 
+				if(h.size()> corresVnum*HeapSimplexRatio ) 
 					ClearHeap();
 				std::pop_heap(h.begin(),h.end());
 				LocModPtrType locMod	= h.back().locModPtr;
@@ -133,8 +133,8 @@ namespace vcg{
 					if (locMod->IsFeasible(this->pp))
 					{
 						nPerfmormedOps++;
-						--corrCount;
-						locMod->Execute(m0,this->pp);
+						--corresVnum;
+						locMod->Execute(m,this->pp);
 						locMod->UpdateHeap(h, this->pp);
 					}
 				}
@@ -175,25 +175,29 @@ namespace vcg{
 		typedef std::pair<typename MeshType::VertexType *, typename MeshType::VertexType *> CorresPair;
 		typedef std::vector<CorresPair> CorresPairContainer;
 
-		int corrCount;
+		int corresVnum, corresFnum;
 
 		///initialize for all vertex the temporary mark must call only at the start of decimation
 		///by default it takes the first element in the heap and calls Init (static funcion) of that type
 		///of local modification. 
 		template <class LocalModificationType>
-		void Init()
+		void Init(bool aligned = true)
 		{
+			assert(m.Cm());
+			if (!aligned) {
+
+			}
+
 			CorresPairContainer cpc;
 			FindCorresponding(cpc);
 
-			vcg::tri::InitVertexIMark(m0);
-			vcg::tri::InitVertexIMark(m1);
+			vcg::tri::InitVertexIMark(m);
+			vcg::tri::InitVertexIMark(*m.Cm());
 
 			// The expected size of heap depends on the type of the local modification we are using..
 			HeapSimplexRatio = LocalModificationType::HeapSimplexRatio(pp);
 
-			LocalModificationType::Init(m0,m1,h,pp);
-			//LocalModificationType::Init(m1,h1,pp);
+			LocalModificationType::Init(m,h,pp);
 
 			std::make_heap(h.begin(),h.end());
 
@@ -212,14 +216,14 @@ namespace vcg{
 		/// say if the process is to end or not: the process ends when any of the termination conditions is verified
 		/// override this function to implemetn other tests
 		bool GoalReached(){
-			assert ( ( ( tf & LOnSimplices	)==0) ||  ( nTargetSimplices!= -1));
-			assert ( ( ( tf & LOnVertices	)==0) ||  ( nTargetVertices	!= -1));
+			assert ( ( ( tf & LOnCorresSimplices	)==0) ||  ( nTargetSimplices!= -1));
+			assert ( ( ( tf & LOnCorresVertices	)==0) ||  ( nTargetVertices	!= -1));
 			assert ( ( ( tf & LOnOps		)==0) ||  ( nTargetOps		!= -1));
 			assert ( ( ( tf & LOMetric		)==0) ||  ( targetMetric	!= -1));
 			assert ( ( ( tf & LOTime		)==0) ||  ( timeBudget		!= -1));
 
-			if ( IsTerminationFlag(LOnSimplices) &&	( m0.SimplexNumber()<= nTargetSimplices)) return true;
-			if ( IsTerminationFlag(LOnVertices)  &&  ( corrCount <= nTargetVertices)) return true;
+			if ( IsTerminationFlag(LOnCorresSimplices) &&	( corresFnum<= nTargetSimplices)) return true;
+			if ( IsTerminationFlag(LOnCorresVertices)  &&  ( corresVnum <= nTargetVertices)) return true;
 			if ( IsTerminationFlag(LOnOps)		   && (nPerfmormedOps	== nTargetOps)) return true;
 			if ( IsTerminationFlag(LOMetric)		 &&  ( currMetric		> targetMetric)) return true;
 			if ( IsTerminationFlag(LOTime) )
@@ -253,23 +257,23 @@ namespace vcg{
 	private:
 		void FindCorresponding(CorresPairContainer &cpc)
 		{
-			Vertex2dConstDataWrapper<MeshType> dw(m0);
+			Vertex2dConstDataWrapper<MeshType> dw(m);
 			KdTree<ScalarType> tree(dw);
 			tree.setMaxNofNeighbors(1);
 
-			for (unsigned int i=0;i<m1.vert.size();++i)
+			for (unsigned int i=0;i<m.Cm()->vert.size();++i)
 			{
-				CoordType location = m1.vert[i].cP();
+				CoordType location = m.Cm()->vert[i].cP();
 				location[2] = 0;
 				tree.doQueryK(location);
 				int neighbor = tree.getNeighborId(0);
 
-				const CoordType loc = m0.vert[neighbor].cP();
+				const CoordType loc = m.vert[neighbor].cP();
 				if (fabs(loc[0] - location[0]) < std::numeric_limits<ScalarType>::epsilon() &&
 					fabs(loc[1] - location[1]) < std::numeric_limits<ScalarType>::epsilon()) {
-						m1.vert[i].Cv() = &(m0.vert[neighbor]);
-						m0.vert[neighbor].Cv() = &(m1.vert[i]);
-						++corrCount;
+						m.Cm()->vert[i].Cv() = &(m.vert[neighbor]);
+						m.vert[neighbor].Cv() = &(m.Cm()->vert[i]);
+						++corresVnum;
 				}
 			}
 		}

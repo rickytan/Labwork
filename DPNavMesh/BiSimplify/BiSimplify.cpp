@@ -116,7 +116,7 @@ void load_mesh(Mesh &mesh, const char *mesh_file)
 void test()
 {
 	const char *mesh_file0 = "face_mesh0.ply", *mesh_file1 = "face_mesh1.ply";
-	int final_size = 1000;
+	int final_size = 2000;
 	Mesh m0, m1;
 	
 	load_mesh(m0, mesh_file0);
@@ -131,9 +131,9 @@ void test()
 	vcg::tri::UpdateBounding<Mesh>::Box(m0);
 	vcg::tri::UpdateBounding<Mesh>::Box(m1);
 
-	vcg::BiOptimization<Mesh> bioptim(m0, m1, &params);
+	vcg::BiOptimization<Mesh> bioptim(m0, &params);
 	bioptim.Init<MyTriEdgeCollapse>();
-	bioptim.SetTargetSimplices(final_size);
+	bioptim.SetTargetVertices(final_size);
 	
 	while(bioptim.DoOptimization() && 
 		(m0.fn > final_size || m0.fn > final_size)) {
@@ -148,9 +148,9 @@ int main(int argc, char* argv[])
 	test();
 	return 0;
 
-	char *mesh_file	= "bunny_closed.obj";
-	char *out_file	= "bunny_out.obj";
-	int final_size	= 100;
+	char *mesh_file	= "face_mesh0.ply";
+	char *out_file	= "face_mesh0_simp.ply";
+	int final_size	= 1000;
 
 	printf("Loading %s\n", mesh_file);
 	int error = vcg::tri::io::Importer<Mesh>::Open(mesh, mesh_file);
@@ -168,7 +168,8 @@ int main(int argc, char* argv[])
 
 	vcg::LocalOptimization<Mesh> optim(mesh, &params);
 	optim.Init<TriEdgeCollapse>();
-	optim.SetTargetSimplices(final_size);
+	//optim.SetTargetSimplices(final_size);
+	optim.SetTargetVertices(final_size);
 	optim.SetTimeBudget(0.5f);
 
 	while (optim.DoOptimization() && mesh.fn > final_size)

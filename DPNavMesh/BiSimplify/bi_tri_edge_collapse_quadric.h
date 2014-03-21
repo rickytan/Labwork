@@ -60,15 +60,17 @@ namespace vcg {
 			}
 
 			void Execute(TriMeshType &m, vcg::BaseParameterClass *_pp) {
+				assert(this->pos.m == m);
+
 				QParameter *pp=(QParameter *)_pp;
 				CoordType newPos0, newPos1;
 				VertexPairType vp0, vp1;
 				vp0 = this->pos;
 				vp1 = VertexPairType(vp0.V(0)->Cv(), vp0.V(1)->Cv(), vp0.m->Cm());
 				if(pp->OptimalPlacement) {
-					newPos0= this->ComputeMinimal();
+					newPos0 = static_cast<MYTYPE*>(this)->ComputeMinimal();
 					this->pos = vp1;
-					newPos1 = this->ComputeMinimal();
+					newPos1 = static_cast<MYTYPE*>(this)->ComputeMinimal();
 				}
 				else {
 					newPos0=this->pos.V(1)->P();
@@ -141,7 +143,8 @@ namespace vcg {
 
 			}
 
-			static void Init(TriMeshType &m0, TriMeshType &m1, HeapType &h_ret, BaseParameterClass *_pp) {
+			static void Init(TriMeshType &m, HeapType &h_ret, BaseParameterClass *_pp) {
+				assert(m.Cm()); // Mesh must have a corresponding mesh!
 				QParameter *pp=(QParameter *)_pp;
 
 				typename 	TriMeshType::VertexIterator  vi;
@@ -149,11 +152,11 @@ namespace vcg {
 
 				pp->CosineThr=cos(pp->NormalThrRad);
 
-				vcg::tri::UpdateTopology<TriMeshType>::VertexFace(m0);
-				vcg::tri::UpdateFlags<TriMeshType>::FaceBorderFromVF(m0);
+				vcg::tri::UpdateTopology<TriMeshType>::VertexFace(m);
+				vcg::tri::UpdateFlags<TriMeshType>::FaceBorderFromVF(m);
 
-				vcg::tri::UpdateTopology<TriMeshType>::VertexFace(m1);
-				vcg::tri::UpdateFlags<TriMeshType>::FaceBorderFromVF(m1);
+				vcg::tri::UpdateTopology<TriMeshType>::VertexFace(*m.Cm());
+				vcg::tri::UpdateFlags<TriMeshType>::FaceBorderFromVF(*m.Cm());
 /*
 				if(pp->FastPreserveBoundary)
 				{
@@ -180,18 +183,16 @@ namespace vcg {
 								}
 				}
 */
-				InitQuadric(m0,pp);
-				InitQuadric(m1,pp);
+				InitQuadric(m,pp);
+				InitQuadric(*m.Cm(),pp);
 
-				TriMeshType &m = m0.VN() < m1.VN() ? m0 : m1;
 				// Initialize the heap with all the possible collapses
 				if(IsSymmetric(pp))
 				{ // if the collapse is symmetric (e.g. u->v == v->u)
 					for(vi=m.vert.begin();vi!=m.vert.end();++vi)
 						if(!(*vi).IsD() && (*vi).IsRW() && (*vi).Cv())
 						{
-							vcg::face::VFIterator<FaceType> x;
-							for( x.F() = (*vi).VFp(), x.I() = (*vi).VFi(); !x.End(); ++ x){
+							for(vcg::face::VFIterator<FaceType> x(&*vi); !x.End(); ++ x){
 								x.V1()->ClearV();
 								x.V2()->ClearV();
 							}
@@ -201,14 +202,14 @@ namespace vcg {
 								x.V2()->ClearV();
 							}
 							
-							for( x.F() = (*vi).VFp(), x.I() = (*vi).VFi(); x.F()!=0; ++x )
+							for(vcg::face::VFIterator<FaceType> x(&*vi); !x.End(); ++ x)
 							{
 								assert(x.F()->V(x.I())==&(*vi));
 								if((x.V0()<x.V1()) && x.V1()->IsRW() && !x.V1()->IsV() && x.V1()->Cv()) {
 									x.V1()->SetV();
 									h_ret.push_back(HeapElem(new MYTYPE(VertexPair(x.V0(),x.V1(),m),TriEdgeCollapse< TriMeshType,VertexPair,MYTYPE>::GlobalMark(),_pp )));
 								}
-								if((x.V0()<x.V2()) && x.V2()->IsRW()&& !x.V2()->IsV() && x.V2()->Cv()){
+								if((x.V0()<x.V2()) && x.V2()->IsRW() && !x.V2()->IsV() && x.V2()->Cv()){
 									x.V2()->SetV();
 									h_ret.push_back(HeapElem(new MYTYPE(VertexPair(x.V0(),x.V2(),m),TriEdgeCollapse< TriMeshType,VertexPair,MYTYPE>::GlobalMark(),_pp )));
 								}
