@@ -113,6 +113,41 @@ void load_mesh(Mesh &mesh, const char *mesh_file)
 	printf("Mesh loaded with Vertex: %d\tFace: %d\n\n", mesh.vn, mesh.fn);
 }
 
+void genMesh(Mesh &mesh)
+{
+	srand(time(NULL));
+
+	int mesh_size = 16;
+	Mesh::VertexIterator vi = vcg::tri::Allocator<Mesh>::AddVertices(mesh, (mesh_size) * (mesh_size) * 4);
+	Mesh::FaceIterator fi = vcg::tri::Allocator<Mesh>::AddFaces(mesh, mesh_size * mesh_size * 2);
+	//Mesh::VertexPointer vp[mesh_size + 1];
+	for (int i=0;i<mesh_size;++i)
+	{
+		for (int j=0;j<mesh_size;++j)
+		{
+			Mesh::VertexPointer vp[4] = {0};
+			vp[0] = &*vi++;
+			vp[1] = &*vi++;
+			vp[2] = &*vi++;
+			vp[3] = &*vi++;
+
+			vp[0]->P() = Mesh::CoordType(i + 0 + 0.01 * ((rand()-5)%10), j + 0 + 0.01 * ((rand()-5)%10), 0);
+			vp[1]->P() = Mesh::CoordType(i + 0 + 0.01 * ((rand()-5)%10), j + 1 + 0.01 * ((rand()-5)%10), 0);
+			vp[2]->P() = Mesh::CoordType(i + 1 + 0.01 * ((rand()-5)%10), j + 1 + 0.01 * ((rand()-5)%10), 0);
+			vp[3]->P() = Mesh::CoordType(i + 1 + 0.01 * ((rand()-5)%10), j + 0 + 0.01 * ((rand()-5)%10), 0);
+
+			fi->V(0) = vp[0];
+			fi->V(1) = vp[1];
+			fi->V(2) = vp[2];
+			++fi;
+			fi->V(0) = vp[2];
+			fi->V(1) = vp[3];
+			fi->V(2) = vp[0];
+			++fi;
+		}
+	}
+}
+
 void test()
 {
 	const char *mesh_file0 = "face_mesh0.ply", *mesh_file1 = "face_mesh1.ply";
@@ -145,7 +180,12 @@ void test()
 
 int main(int argc, char* argv[])
 {
-	test();
+	//test();
+	//return 0;
+
+	Mesh m;
+	genMesh(m);
+	vcg::tri::io::Exporter<Mesh>::Save(m, "generated.ply");
 	return 0;
 
 	char *mesh_file	= "face_mesh0.ply";
