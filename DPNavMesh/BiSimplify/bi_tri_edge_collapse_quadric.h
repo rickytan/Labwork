@@ -5,6 +5,8 @@
 
 #include <vcg/complex/algorithms/local_optimization.h>
 #include <vcg/complex/algorithms/local_optimization/tri_edge_collapse_quadric.h>
+#include <eigenlib/Eigen/Dense>
+#include <eigenlib/Eigen/LU>
 
 namespace vcg {
     namespace tri {
@@ -59,6 +61,67 @@ namespace vcg {
                     this->pos = p;
                 }
             }
+            /*
+            计算使总Error 最小的两个对应点的位置
+            */
+            void ComputeBiMinimal(CoordType &This, CoordType &Other)
+            {
+                typename TriMeshType::VertexType * v[2], * v_corres[2];
+                v[0] = this->pos.V(0);
+                v[1] = this->pos.V(1);
+                v_corres[0] = v[0]->Cv();
+                v_corres[1] = v[1]->Cv();
+
+                QuadricType q=QH::Qd(v[0]);
+                q+=QH::Qd(v[1]);
+
+                QuadricType p=QH::Qd(v_corres[0]);
+                p+=QH::Qd(v_corres[1]);
+
+using namespace Eigen;
+
+                Matrix4d A;
+                Vector4d b;
+                A << p.a[0]+q.a[0],p.a[1]+q.a[1],q.a[2],p.a[2],
+
+                     p.a[1]+q.a[1],p.a[3]+q.a[3],q.a[4],p.a[4],
+
+                     q.a[2]       ,q.a[4]       ,q.a[5],0,
+
+                     p.a[2]       ,p.a[4]       ,0     ,p.a[5];
+
+                b << -(p.b[0]+q.b[0]),
+                     -(p.b[1]+q.b[1]),
+                     -q.b[2]/2,
+                     -p.b[2]/2;
+                if (A.determinant() > std::numeric_limits<double>::epsilon()) {
+                    Vector4d result = A.inverse()*b;
+                    This[0] = Other[0] = result[0];
+                    This[1] = Other[1] = result[1];
+                    This[2] = result[2];
+                    Other[2] = result[3];
+                }
+                else {
+                    assert(false);
+                    Point3<QuadricType::ScalarType> x;
+
+                    bool rt=q.Minimum(x);
+                    if(!rt) { // if the computation of the minimum fails we choose between the two edge points and the middle one.
+                        Point3<QuadricType::ScalarType> x0=Point3d::Construct(v[0]->P());
+                        Point3<QuadricType::ScalarType> x1=Point3d::Construct(v[1]->P());
+                        x.Import((v[0]->P()+v[1]->P())/2);
+                        double qvx=q.Apply(x);
+                        double qv0=q.Apply(x0);
+                        double qv1=q.Apply(x1);
+                        if(qv0<qvx) x=x0;
+                        if(qv1<qvx && qv1<qv0) x=x1;
+                    }
+                }
+
+
+
+                //return CoordType::Construct(x);
+            }
 
             ScalarType ComputePriority(vcg::BaseParameterClass *_pp)
             {
@@ -88,18 +151,21 @@ namespace vcg {
                 CoordType OldPosOther1 = v[1]->Cv()->cP();
 
                 if(pp->OptimalPlacement) {
-                    v[0]->P() = ComputeMinimal();
+                    ComputeBiMinimal(v[0]->P(), v[0]->Cv()->P());
                     v[1]->P()=v[0]->P();
+                    v[1]->Cv()->P()=v[0]->Cv()->P();
                 }
-                else 
+                else {
                     v[0]->P() = v[1]->P();
+                    v[0]->Cv()->P() = v[1]->Cv()->P();
+                }
 
                 //// Rescan faces and compute quality and difference between normals
                 int i;
-                double ndiff,MinCos  = 1e100; // minimo coseno di variazione di una normale della faccia 
+                double ndiff,MinCos  = std::numeric_limits<double>::max(); // minimo coseno di variazione di una normale della faccia 
                 // (e.g. max angle) Mincos varia da 1 (normali coincidenti) a
                 // -1 (normali opposte);
-                double qt,   MinQual = 1e100;
+                double qt,   MinQual = std::numeric_limits<double>::max();
                 CoordType nn;
                 for(x.F() = v[0]->VFp(), x.I() = v[0]->VFi(),i=0; x.F()!=0; ++x ) {	// for all faces in v0		
                     if(x.F()->V(0)!=v[1] && x.F()->V(1)!=v[1] && x.F()->V(2)!=v[1] )		// skip faces with v1
@@ -134,13 +200,19 @@ namespace vcg {
                 Point3d tpd=Point3d::Construct(v[1]->P());
                 double QuadErr = pp->ScaleFactor*qq.Apply(tpd);
 
-                // All collapses involving triangles with quality larger than <QualityThr> has no penalty;
-                if(MinQual>pp->QualityThr) MinQual=pp->QualityThr;
+                QuadricType p = QH::Qd(v[0]->Cv());
+                p += QH::Qd(v[1]->Cv());
+                QuadErr += pp->ScaleFactor*p.Apply(v[1]->Cv()->cP());
 
-                if(pp->NormalCheck){
+                // All collapses involving triangles with quality larger than <QualityThr> has no penalty;
+                if(MinQual > pp->QualityThr)
+                    MinQual = pp->QualityThr;
+
+                if(pp->NormalCheck) {
                     // All collapses where the normal vary less  than <NormalThr> (e.g. more than CosineThr)
                     // have no penalty
-                    if(MinCos>pp->CosineThr) MinCos=pp->CosineThr;
+                    if(MinCos>pp->CosineThr)
+                        MinCos=pp->CosineThr;
                     MinCos=(MinCos+1)/2.0; // Now it is in the range 0..1 with 0 very dangerous!
                 }
 
@@ -156,6 +228,8 @@ namespace vcg {
                 //Rrestore old position of v0 and v1
                 v[0]->P()=OldPos0;
                 v[1]->P()=OldPos1;
+                v[0]->Cv()->P() = OldPosOther0;
+                v[1]->Cv()->P() = OldPosOther1;
                 this->_priority = error;
                 return this->_priority;
             }
@@ -169,9 +243,12 @@ namespace vcg {
                 vp0 = this->pos;
                 vp1 = VertexPairType(vp0.V(0)->Cv(), vp0.V(1)->Cv(), vp0.m->Cm());
                 if(pp->OptimalPlacement) {
+                    ComputeBiMinimal(newPos0, newPos1);
+                    /*
                     newPos0 = static_cast<MYTYPE*>(this)->ComputeMinimal();
                     this->pos = vp1;
                     newPos1 = static_cast<MYTYPE*>(this)->ComputeMinimal();
+                    */
                 }
                 else {
                     newPos0=this->pos.V(1)->P();
