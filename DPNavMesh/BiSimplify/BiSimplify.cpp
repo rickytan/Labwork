@@ -180,8 +180,8 @@ void test()
 
 int main(int argc, char* argv[])
 {
-	//test();
-	//return 0;
+	test();
+	return 0;
 
 	Mesh m;
 	genMesh(m);

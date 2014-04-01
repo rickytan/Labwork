@@ -46,21 +46,7 @@ namespace vcg {
             typedef VertexPairType VertexPair;
             typedef BiTriEdgeCollapseQuadricParameter<typename TriMeshType::CoordType> QParameter;
 
-            BiTriEdgeCollapse(const VertexPair &p, int i, vcg::BaseParameterClass *pp)
-            {
-                this->localMark = i;
-                this->pos=p;
-                ScalarType _pri0 = ComputePriority(pp);
-                this->pos = VertexPair::CorresVertexPair(p);
-                ScalarType _pri1 = ComputePriority(pp);
-                if (_pri0 < _pri1) {
-                    this->_priority = _pri1;
-                }
-                else {
-                    this->_priority = _pri0;
-                    this->pos = p;
-                }
-            }
+            BiTriEdgeCollapse(const VertexPair &p, int i, vcg::BaseParameterClass *pp): TriEdgeCollapseQuadric<TriMeshType, VertexPair, MYTYPE>(p,i,pp){}
             /*
             计算使总Error 最小的两个对应点的位置
             */
@@ -239,9 +225,11 @@ using namespace Eigen;
 
                 QParameter *pp=(QParameter *)_pp;
                 CoordType newPos0, newPos1;
+                
                 VertexPairType vp0, vp1;
                 vp0 = this->pos;
                 vp1 = VertexPairType(vp0.V(0)->Cv(), vp0.V(1)->Cv(), vp0.m->Cm());
+                
                 if(pp->OptimalPlacement) {
                     ComputeBiMinimal(newPos0, newPos1);
                     /*
@@ -261,7 +249,6 @@ using namespace Eigen;
                 EdgeCollapser<TriMeshType,VertexPairType>::Do(*vp0.m, vp0, newPos0); // v0 is deleted and v1 take the new position
                 QH::Qd(vp1.V(1))+=QH::Qd(vp1.V(0));
                 EdgeCollapser<TriMeshType,VertexPairType>::Do(*vp1.m, vp1, newPos1); // v0 is deleted and v1 take the new position
-                this->pos = vp0;
             }
 
             inline  void UpdateHeap(HeapType & h_ret,BaseParameterClass *_pp)
