@@ -169,10 +169,11 @@ void test()
 	vcg::BiOptimization<Mesh> bioptim(m0, &params);
 	bioptim.Init<MyTriEdgeCollapse>();
 	bioptim.SetTargetVertices(final_size);
+    bioptim.SetTimeBudget(1.0);
 	
 	while(bioptim.DoOptimization() && 
 		(m0.fn > final_size || m0.fn > final_size)) {
-
+        printf("Corresponding Vertics %d\r", bioptim.corresVnum);
 	}
 	vcg::tri::io::Exporter<Mesh>::Save(m0, "m0.ply");
 	vcg::tri::io::Exporter<Mesh>::Save(m1, "m1.ply");
@@ -180,6 +181,7 @@ void test()
 
 int main(int argc, char* argv[])
 {
+    
 	test();
 	return 0;
 
