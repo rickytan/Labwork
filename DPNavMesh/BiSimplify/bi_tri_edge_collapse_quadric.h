@@ -70,17 +70,17 @@ namespace vcg {
                 Vector4d b;
                 A << p.a[0]+q.a[0],p.a[1]+q.a[1],q.a[2],p.a[2],
 
-                    p.a[1]+q.a[1],p.a[3]+q.a[3],q.a[4],p.a[4],
+                     p.a[1]+q.a[1],p.a[3]+q.a[3],q.a[4],p.a[4],
 
-                    q.a[2]       ,q.a[4]       ,q.a[5],0,
+                     q.a[2]       ,q.a[4]       ,q.a[5],0,
 
-                    p.a[2]       ,p.a[4]       ,0     ,p.a[5];
+                     p.a[2]       ,p.a[4]       ,0     ,p.a[5];
 
-                b << -(p.b[0]+q.b[0]),
-                    -(p.b[1]+q.b[1]),
-                    -q.b[2]/2,
-                    -p.b[2]/2;
-                if (A.determinant() > 0) {// std::numeric_limits<double>::epsilon()) {
+                b << -(p.b[0]+q.b[0])/2,
+                     -(p.b[1]+q.b[1])/2,
+                     -q.b[2]/2,
+                     -p.b[2]/2;
+                if (fabs(A.determinant()) > std::numeric_limits<double>::epsilon()) {
                     Vector4d result = A.inverse()*b;
                     This[0] = Other[0] = result[0];
                     This[1] = Other[1] = result[1];
@@ -88,8 +88,6 @@ namespace vcg {
                     Other[2] = result[3];
                 }
                 else {
-                    double e = (A*A.inverse()*b - b).norm();
-                    e = A.determinant();
 
                     bool rt0=q.Minimum(This);
                     bool rt1=p.Minimum(Other);
@@ -245,7 +243,11 @@ namespace vcg {
                 vp1 = VertexPairType(vp0.V(0)->Cv(), vp0.V(1)->Cv(), vp0.m->Cm());
 
                 if(pp->OptimalPlacement) {
+                    //CoordType p0=vp0.V(0)->cP();
+                    //CoordType p1=vp0.V(1)->cP();
+                    //printf("Position:%6.6f %6.6f %6.6f, %6.6f %6.6f %6.6f\n", p0[0], p0[1], p0[2], p1[0], p1[1], p1[2]);
                     ComputeBiMinimal(newPos0, newPos1);
+                    //printf("New position:%6.6f %6.6f %6.6f\n", newPos0[0], newPos0[1], newPos0[2]);
                     /*
                     newPos0 = static_cast<MYTYPE*>(this)->ComputeMinimal();
                     this->pos = vp1;
@@ -276,7 +278,7 @@ namespace vcg {
 
                 // First loop around the remaining vertex to unmark visited flags
                 vcg::face::VFIterator<FaceType> vfi(v[1]);
-                int t=0;
+                //int t=0;
                 while (!vfi.End()){
                     if (!vfi.F()->IsD()) {
                         vfi.V1()->ClearV();
@@ -285,9 +287,9 @@ namespace vcg {
                         vfi.V2()->Cv()->ClearV();
                     }
                     ++vfi;
-                    ++t;
+                    //++t;
                 }
-                printf("num of faces %d\n",t);
+                //printf("num of faces %d\n",t);
 
                 // Second Loop
                 vfi = face::VFIterator<FaceType>(v[1]);

@@ -202,6 +202,10 @@
 				RelativePath=".\plylib.h"
 				>
 			</File>
+			<File
+				RelativePath=".\single_vertex_remover.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="资源文件"

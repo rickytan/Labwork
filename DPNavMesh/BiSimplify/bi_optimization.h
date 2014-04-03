@@ -9,6 +9,7 @@
 #include<vcg/complex/complex.h>
 #include <vcg/space/index/kdtree/kdtree.h>
 #include <vcg/complex/algorithms/local_optimization.h>
+#include "single_vertex_remover.h"
 
 namespace vcg{
 
@@ -187,6 +188,17 @@ namespace vcg{
 			if (!aligned) {
 
 			}
+            vcg::tri::UpdateTopology<MeshType>::VertexFace(m);
+            vcg::tri::UpdateFlags<MeshType>::FaceBorderFromVF(m);
+
+            vcg::tri::UpdateTopology<MeshType>::VertexFace(*m.Cm());
+            vcg::tri::UpdateFlags<MeshType>::FaceBorderFromVF(*m.Cm());
+
+            int d=0;
+            d = SingleVertexRemover<MeshType>::Remove(m);
+            printf("%d single vertex deleted!\n",d);
+            d = SingleVertexRemover<MeshType>::Remove(*m.Cm());
+            printf("%d single vertex deleted!\n",d);
 
 			CorresPairContainer cpc;
 			FindCorresponding(cpc);
@@ -209,7 +221,7 @@ namespace vcg{
 		template <class LocalModificationType>
 		void Finalize()
 		{
-			LocalModificationType::Finalize(m,h0,pp);
+			LocalModificationType::Finalize(m,h,pp);
 		}
 
 
@@ -243,15 +255,16 @@ namespace vcg{
 		void ClearHeapOld()
 		{
 			typename HeapType::iterator hi;
-			for(hi=h0.begin();hi!=h0.end();++hi)
+			for(hi=h.begin();hi!=h.end();++hi)
 				if(!(*hi).locModPtr->IsUpToDate())
 				{
-					*hi=h0.back();
-					h0.pop_back();
-					if(hi==h0.end()) break;
+					*hi=h.back();
+					h.pop_back();
+					if(hi==h.end())
+                        break;
 				}
 				//printf("\nReduced heap from %i to %i",sz,h.size());
-				make_heap(h0.begin(),h0.end());
+				make_heap(h.begin(),h.end());
 		}
 
 	private:

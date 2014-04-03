@@ -73,13 +73,14 @@ private:
 	Vertex *_cv;
 };
 
+
 class Edge: public vcg::Edge<UsedTypes> {};
 
 class Face: public vcg::Face<
-	UsedTypes,
-	vcg::face::VFAdj,
-	vcg::face::VertexRef,
-	vcg::face::BitFlags
+    UsedTypes,
+    vcg::face::VFAdj,
+    vcg::face::VertexRef,
+    vcg::face::BitFlags
 > {};
 
 typedef vcg::tri::BasicVertexPair<Vertex> VertexPair;

@@ -151,7 +151,7 @@ void genMesh(Mesh &mesh)
 void test()
 {
 	const char *mesh_file0 = "face_mesh0.ply", *mesh_file1 = "face_mesh1.ply";
-	int final_size = 2000;
+	int final_size = 3000;
 	Mesh m0, m1;
 	
 	load_mesh(m0, mesh_file0);
@@ -172,8 +172,8 @@ void test()
     bioptim.SetTimeBudget(1.0);
 	
 	while(bioptim.DoOptimization() && 
-		(m0.fn > final_size || m0.fn > final_size)) {
-        printf("Corresponding Vertics %d\r", bioptim.corresVnum);
+		(m0.fn > final_size && m1.fn > final_size)) {
+        printf("Corresponding Vertics %10d\r", bioptim.corresVnum);
 	}
 	vcg::tri::io::Exporter<Mesh>::Save(m0, "m0.ply");
 	vcg::tri::io::Exporter<Mesh>::Save(m1, "m1.ply");
@@ -189,7 +189,7 @@ int main(int argc, char* argv[])
 	genMesh(m);
 	vcg::tri::io::Exporter<Mesh>::Save(m, "generated.ply");
 	return 0;
-
+    
 	char *mesh_file	= "face_mesh0.ply";
 	char *out_file	= "face_mesh0_simp.ply";
 	int final_size	= 1000;
