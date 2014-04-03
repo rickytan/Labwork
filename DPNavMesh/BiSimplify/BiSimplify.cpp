@@ -171,17 +171,20 @@ void test()
 	bioptim.SetTargetVertices(final_size);
     bioptim.SetTimeBudget(1.0);
 	
-	while(bioptim.DoOptimization() && 
-		(m0.fn > final_size && m1.fn > final_size)) {
+	while(bioptim.DoOptimization() && bioptim.corresVnum > final_size) {
         printf("Corresponding Vertics %10d\r", bioptim.corresVnum);
 	}
 	vcg::tri::io::Exporter<Mesh>::Save(m0, "m0.ply");
 	vcg::tri::io::Exporter<Mesh>::Save(m1, "m1.ply");
 }
-
+#include "single_vertex_remover.h"
 int main(int argc, char* argv[])
 {
-    
+    Mesh mm;
+    load_mesh(mm, "face_mesh0.ply");
+    SingleVertexRemover<Mesh>::Remove(mm);
+    vcg::tri::io::Exporter<Mesh>::Save(mm, "single_removed.ply");
+    return 0;
 	test();
 	return 0;
 

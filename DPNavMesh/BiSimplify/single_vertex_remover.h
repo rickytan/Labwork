@@ -13,10 +13,12 @@ class SingleVertexRemover
 {
     typedef typename vcg::face::VFIterator<typename TriMeshType::FaceType> VFI;
     typedef typename TriMeshType::VertexIterator VI;
-
+    typedef std::vector<typename TriMeshType::VertexType *> VertexPointContainer;
+    typedef typename VertexPointContainer::iterator VPCI;
 public:
     static int Remove(TriMeshType &mesh) {
         int deletedVextex = 0;
+        VertexPointContainer ver_to_delete;
         for (VI vi=mesh.vert.begin();vi!=mesh.vert.end();++vi)
         {
             if (!vi->IsD() && vi->IsR()) {
@@ -27,12 +29,13 @@ public:
                         break;
                 }
                 if (fn <= 1 && vi->IsW()) {  // Single Vertex, has no face arround it
-                    vcg::tri::Allocator<TriMeshType>::DeleteVertex(mesh, *vi);
-                    ++deletedVextex;
+                    ver_to_delete.push_back(&*vi);
                 }
             }
         }
-        return deletedVextex;
+        for (VPCI v = ver_to_delete.begin(); v != ver_to_delete.end(); ++v)
+            vcg::tri::Allocator<TriMeshType>::DeleteVertex(mesh, **v);
+        return ver_to_delete.size();
     }
 };
 #endif  // end of __SINGLE_VERTEX_REMOVER
