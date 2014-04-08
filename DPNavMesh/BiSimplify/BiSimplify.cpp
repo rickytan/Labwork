@@ -150,8 +150,8 @@ void genMesh(Mesh &mesh)
 
 void test()
 {
-	const char *mesh_file0 = "face_mesh0.ply", *mesh_file1 = "face_mesh1.ply";
-	int final_size = 3000;
+	const char *mesh_file0 = "single_removed0.ply", *mesh_file1 = "single_removed1.ply";
+	int final_size = 1000;
 	Mesh m0, m1;
 	
 	load_mesh(m0, mesh_file0);
@@ -177,14 +177,11 @@ void test()
 	vcg::tri::io::Exporter<Mesh>::Save(m0, "m0.ply");
 	vcg::tri::io::Exporter<Mesh>::Save(m1, "m1.ply");
 }
-#include "single_vertex_remover.h"
+
+using namespace std;
+
 int main(int argc, char* argv[])
 {
-    Mesh mm;
-    load_mesh(mm, "face_mesh0.ply");
-    SingleVertexRemover<Mesh>::Remove(mm);
-    vcg::tri::io::Exporter<Mesh>::Save(mm, "single_removed.ply");
-    return 0;
 	test();
 	return 0;
 

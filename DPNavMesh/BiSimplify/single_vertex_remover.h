@@ -17,6 +17,7 @@ class SingleVertexRemover
     typedef typename VertexPointContainer::iterator VPCI;
 public:
     static int Remove(TriMeshType &mesh) {
+        vcg::tri::UpdateTopology<TriMeshType>::VertexFace(mesh);
         int deletedVextex = 0;
         VertexPointContainer ver_to_delete;
         for (VI vi=mesh.vert.begin();vi!=mesh.vert.end();++vi)
@@ -25,10 +26,10 @@ public:
                 int fn = 0;
                 for (VFI vfi(&*vi);!vfi.End();++vfi,++fn)
                 {
-                    if (fn > 1)
+                    if (fn > 0)
                         break;
                 }
-                if (fn <= 1 && vi->IsW()) {  // Single Vertex, has no face arround it
+                if (fn <= 0 && vi->IsW()) {  // Single Vertex, has no face arround it
                     ver_to_delete.push_back(&*vi);
                 }
             }

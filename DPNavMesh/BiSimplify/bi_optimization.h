@@ -188,11 +188,6 @@ namespace vcg{
 			if (!aligned) {
 
 			}
-            vcg::tri::UpdateTopology<MeshType>::VertexFace(m);
-            vcg::tri::UpdateFlags<MeshType>::FaceBorderFromVF(m);
-
-            vcg::tri::UpdateTopology<MeshType>::VertexFace(*m.Cm());
-            vcg::tri::UpdateFlags<MeshType>::FaceBorderFromVF(*m.Cm());
 
             int d=0;
             d = SingleVertexRemover<MeshType>::Remove(m);

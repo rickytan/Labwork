@@ -109,10 +109,34 @@ namespace vcg {
                     else if (!rt1) {
                         Other = This;
                         Other[2] = (v_corres[0]->cP()[2]+v_corres[1]->cP()[2])/2;
+                        CoordType v0 = This, v1 = This;
+                        v0[2] = v_corres[0]->cP()[2];
+                        v1[2] = v_corres[1]->cP()[2];
+                        double qvx = p.Apply(This);
+                        double qv0 = p.Apply(v0);
+                        double qv1 = p.Apply(v1);
+                        if (qv0<qvx) {
+                            Other = v0;
+                        }
+                        if (qv1<qvx && qv1<qv0) {
+                            Other = v1;
+                        }
                     }
                     else {
                         This = Other;
                         This[2] = (v[0]->cP()[2]+v[1]->cP()[2])/2;
+                        CoordType v0 = Other, v1 = Other;
+                        v0[2] = v[0]->cP()[2];
+                        v1[2] = v[1]->cP()[2];
+                        double qvx = q.Apply(This);
+                        double qv0 = q.Apply(v0);
+                        double qv1 = q.Apply(v1);
+                        if (qv0<qvx) {
+                            This = v0;
+                        }
+                        if (qv1<qvx && qv1<qv0) {
+                            This = v1;
+                        }
                     }
                 }
 
@@ -283,8 +307,10 @@ namespace vcg {
                     if (!vfi.F()->IsD()) {
                         vfi.V1()->ClearV();
                         vfi.V2()->ClearV();
-                        vfi.V1()->Cv()->ClearV();
-                        vfi.V2()->Cv()->ClearV();
+                        if (vfi.V1()->Cv())
+                            vfi.V1()->Cv()->ClearV();
+                        if (vfi.V2()->Cv())
+                            vfi.V2()->Cv()->ClearV();
                     }
                     ++vfi;
                     //++t;
@@ -383,8 +409,10 @@ namespace vcg {
                             for(vcg::face::VFIterator<FaceType> x(&*vi); !x.End(); ++ x){
                                 x.V1()->ClearV();
                                 x.V2()->ClearV();
-                                x.V1()->Cv()->ClearV();
-                                x.V2()->Cv()->ClearV();
+                                if (x.V1()->Cv())
+                                    x.V1()->Cv()->ClearV();
+                                if (x.V2()->Cv())
+                                    x.V2()->Cv()->ClearV();
                             }
 
                             for(vcg::face::VFIterator<FaceType> x(&*vi); !x.End(); ++ x)
