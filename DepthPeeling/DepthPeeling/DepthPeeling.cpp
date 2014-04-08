@@ -745,7 +745,6 @@ void idle()
 
 void reshape(int w, int h)
 {
-	
 	if (_windowWidth != w || _windowHeight != h) {
 		_windowWidth = w;
 		_windowHeight = h;

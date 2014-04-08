@@ -41,6 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="$(VCGLib)"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -61,6 +62,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="./"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"
@@ -174,12 +176,24 @@
 				RelativePath=".\DepthPeeling.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\GLSLProgram.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="头文件"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\GLSLProgram.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Timer.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="资源文件"
@@ -187,6 +201,50 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 		</Filter>
+		<File
+			RelativePath=".\blend-fragment.glsl"
+			>
+		</File>
+		<File
+			RelativePath=".\blend-vertex.glsl"
+			>
+		</File>
+		<File
+			RelativePath=".\colorful.glsl"
+			>
+		</File>
+		<File
+			RelativePath=".\init-fragment.glsl"
+			>
+		</File>
+		<File
+			RelativePath=".\init-vertex.glsl"
+			>
+		</File>
+		<File
+			RelativePath=".\peel-fragment.glsl"
+			>
+		</File>
+		<File
+			RelativePath=".\peel-vertex.glsl"
+			>
+		</File>
+		<File
+			RelativePath=".\show-fragment.glsl"
+			>
+		</File>
+		<File
+			RelativePath=".\show-vertex.glsl"
+			>
+		</File>
+		<File
+			RelativePath=".\sub-depth-fragment.glsl"
+			>
+		</File>
+		<File
+			RelativePath=".\sub-depth-vertex.glsl"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
