@@ -9,6 +9,8 @@
 #ifndef NV_SHADER_UTILS_H
 #define NV_SHADER_UTILS_H
 
+#pragma disable(4996);
+
 #include <stdio.h>
 #include <string.h>
 
