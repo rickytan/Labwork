@@ -95,7 +95,7 @@ void loadModel(std::string filename)
     vcg::tri::UpdateBounding<Mesh>::Box(g_mesh);
     vcg::tri::UpdateTopology<Mesh>::VertexFace(g_mesh);
     g_modelTranslate = -g_mesh.bbox.Center();
-    g_modelScale = 1.0 / g_mesh.bbox.Diag();
+    g_modelScale = 2.0 / g_mesh.bbox.Diag();
     g_model.m = &g_mesh;
 }
 
@@ -107,18 +107,16 @@ void drawModel()
     glScalef(g_modelScale, g_modelScale, g_modelScale);
     g_model.Draw<vcg::GLW::DMFlat, vcg::GLW::CMNone, vcg::GLW::TMNone>();
     glPopMatrix();
-
-    glutWireTeapot(0.5);
 }
 
 void doPeeling()
 {
     glEnable(GL_DEPTH_TEST);
 
-    //g_shaderFront.use();
-    //g_shaderFront.setUniform("scale", &g_modelScale, 1);
+    g_shaderFront.use();
+    g_shaderFront.setUniform("scale", &g_modelScale, 1);
     drawModel();
-    //g_shaderFront.unuse();
+    g_shaderFront.unuse();
 }
 
 void display()
