@@ -107,6 +107,7 @@ void drawModel()
     glScalef(g_modelScale, g_modelScale, g_modelScale);
     g_model.Draw<vcg::GLW::DMFlat, vcg::GLW::CMNone, vcg::GLW::TMNone>();
     glPopMatrix();
+    glutSolidTeapot(.5);
 }
 
 void doPeeling()
@@ -226,7 +227,7 @@ int main(int argc, char *argv[])
     }
 
     init();
-    loadModel("bunny_closed.obj");
+    loadModel("bunny_closed.ply");
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
