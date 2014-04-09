@@ -66,7 +66,7 @@ void GLSLProgram::setUniform(std::string name, GLfloat *val, int count)
     }
 }
 
-void GLSLProgram::setTexture(std::string texname, GLint texunit)
+void GLSLProgram::setTexture(std::string texname, GLint texunit, GLenum target, GLuint texid)
 {
     GLint linked;
     glGetProgramiv(m_progId, GL_LINK_STATUS, &linked);
@@ -81,7 +81,10 @@ void GLSLProgram::setTexture(std::string texname, GLint texunit)
         return;
     }
 
+    glActiveTexture(GL_TEXTURE0 + texunit);
+    glBindTexture(target, texid);
     glUniform1i(id, texunit);
+    glActiveTexture(GL_TEXTURE0);
 }
 
 void GLSLProgram::addFragmentShader(std::string fragfile)

@@ -8,14 +8,21 @@
 
 #include "Mesh.h"
 #include "GLSLProgram.h"
+#include "RenderTarget.h"
 #include "Timer.h"
 
 #include <gl/glew.h>
 #include <gl/glut.h>
 
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
 
 #ifdef _DEBUG
 #pragma comment(lib, "glew32.lib")
+#pragma comment(lib, "cv200d.lib")
+#pragma comment(lib, "cxcore200d.lib")
+#pragma comment(lib, "highgui200d.lib")
 #else
 #pragma comment(lib, "glew32.lib")
 #endif
@@ -39,9 +46,12 @@ static int g_currentLevel = 0;
 
 GLint g_FBOIds[MAX_PEELING_LEVEL] = {0};
 GLint g_TextureIds[MAX_PEELING_LEVEL] = {0};
-
+GLuint g_depthTexture;
 
 GLSLProgram g_shaderFront;
+GLSLProgram g_shaderPeeling;
+
+RenderTarget g_renderTarget;
 
 Mesh g_mesh;
 vcg::GlTrimesh<Mesh> g_model;
@@ -52,6 +62,21 @@ void initShader()
     g_shaderFront.addFragmentShader("init-fragment.glsl");
     g_shaderFront.linkProgram();
 
+    g_shaderPeeling.addVertexShader("peel-vertex.glsl");
+    g_shaderPeeling.addFragmentShader("peel-fragment.glsl");
+    g_shaderPeeling.linkProgram();
+}
+
+void createBuffer()
+{
+    g_renderTarget.generate(g_windowWidth, g_windowHeight);
+
+    glGenTextures(1, &g_depthTexture);
+}
+
+void deleteBuffer()
+{
+    g_renderTarget.destroy();
 }
 
 void initLight()
@@ -75,13 +100,15 @@ void setupProjection()
 void init()
 {
     initShader();
+    initLight();
+    createBuffer();
 
     //glDisable(GL_CULL_FACE);
     glDisable(GL_NORMALIZE);
     glEnable(GL_CULL_FACE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    initLight();
+
 
     glViewport(0, 0, g_windowWidth, g_windowHeight);
     setupProjection();
@@ -95,7 +122,14 @@ void loadModel(std::string filename)
     vcg::tri::UpdateBounding<Mesh>::Box(g_mesh);
     vcg::tri::UpdateTopology<Mesh>::VertexFace(g_mesh);
     g_modelTranslate = -g_mesh.bbox.Center();
-    g_modelScale = 2.0 / g_mesh.bbox.Diag();
+    vcg::Point3f vec = g_mesh.bbox.max - g_mesh.bbox.min;
+    // a simple way
+    //g_modelScale = 1.0 / max(vec[0], max(vec[1], vec[2])) / tanf(FOVY / 2 * M_PI / 180);
+
+    // a another
+    vcg::Point3f eyeDir = (g_eyeCenter - g_eyePosition).Normalize();
+    float dis = max((vcg::Point3f(vec[0], 0, 0)^eyeDir).Norm(), max((vcg::Point3f(0, vec[1], 0)^eyeDir).Norm(), (vcg::Point3f(0, 0, vec[2])^eyeDir).Norm()));
+    g_modelScale = 1.0 / dis / tanf(FOVY / 2 * M_PI / 180);
     g_model.m = &g_mesh;
 }
 
@@ -103,21 +137,66 @@ void drawModel()
 {
     glColor3f(0, 1.0, 0.0);
     glPushMatrix();
-    glTranslatef(g_modelTranslate.X(), g_modelTranslate.Y(), g_modelTranslate.Z());
     glScalef(g_modelScale, g_modelScale, g_modelScale);
-    g_model.Draw<vcg::GLW::DMFlat, vcg::GLW::CMNone, vcg::GLW::TMNone>();
+    glTranslatef(g_modelTranslate.X(), g_modelTranslate.Y(), g_modelTranslate.Z());
+    g_model.Draw<vcg::GLW::DMFlat, vcg::GLW::CMLast, vcg::GLW::TMNone>();
     glPopMatrix();
     glutSolidTeapot(.5);
 }
 
 void doPeeling()
 {
+    g_renderTarget.bindFrameBuffer(0);
+
     glEnable(GL_DEPTH_TEST);
 
     g_shaderFront.use();
     g_shaderFront.setUniform("scale", &g_modelScale, 1);
     drawModel();
     g_shaderFront.unuse();
+
+    IplImage *image = cvCreateImage(cvSize(g_windowWidth, g_windowHeight), 8, 3);
+    g_renderTarget.readBuffer(g_windowWidth, g_windowHeight, GL_BGR, GL_UNSIGNED_BYTE, image->imageData);
+    cvFlip(image, image);
+    cvShowImage("Debug", image);
+    cvReleaseImage(&image);
+
+    for (int i=0; i < g_currentLevel; ++i)
+    {
+        int currId = (i + 1) % 2;
+        int prevId = 1 - currId;
+
+        g_renderTarget.bindFrameBuffer(currId);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+
+        g_shaderPeeling.use();
+        g_shaderPeeling.setTexture("DepthTex", 0, GL_TEXTURE_RECTANGLE_ARB, g_depthTexture);
+        drawModel();
+        g_shaderPeeling.unuse();
+    }
+    
+    glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
+    glDrawBuffer(GL_BACK);
+    glEnable(GL_TEXTURE);
+    glBindTexture(GL_TEXTURE0, g_renderTarget.m_colorTextures[0]);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, 1, 0, 1, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0);
+    glVertex2f(0, 0);
+    glTexCoord2f(0, 1);
+    glVertex2f(0, 1);
+    glTexCoord2f(1, 1);
+    glVertex2f(1, 1);
+    glTexCoord2f(1, 0);
+    glVertex2f(1, 0);
+    glEnd();
 }
 
 void display()
@@ -144,6 +223,18 @@ void keyboard(unsigned char key, int x, int y)
     switch(key) {
         case 27:
             exit(0);
+            break;
+        case '-':
+        case '_':
+            if (g_currentLevel > 0) {
+                --g_currentLevel;
+                glutPostRedisplay();
+            }
+            break;
+        case '+':
+        case '=':
+            ++g_currentLevel;
+            glutPostRedisplay();
             break;
         default:
             break;
@@ -197,12 +288,26 @@ void timer(int value)
     glutTimerFunc(1000/60, timer, 0);
 }
 
+void printGLInfo()
+{
+    fprintf(stdout, "OpenGL info:\n"
+        "{\n"
+        "\tExtensions: %s\n"
+        "\tVendor: %s\n"
+        "\tRenderer: %s\n"
+        "\tVersion: %s\n"
+        "\tShading Language: %s\n"
+        "}\n", glGetString(GL_EXTENSIONS), glGetString(GL_VENDOR), glGetString(GL_RENDERER), glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+}
+
 int main(int argc, char *argv[])
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
     glutInitWindowSize(g_windowWidth, g_windowHeight);
     g_mainWindow = glutCreateWindow("Depth Peeling");
+
+    printGLInfo();
 
     if (glewInit() != GLEW_OK) {
         printf("glewInit failed!\n");
@@ -215,19 +320,21 @@ int main(int argc, char *argv[])
         "GL_ARB_texture_float "
         "GL_NV_float_buffer "
         "GL_NV_depth_buffer_float ")) {
-        printf("Unable to load the necessary extensions\n");
-        printf("This sample requires:\n");
-        printf("OpenGL version 2.0\n");
-        printf("GL_ARB_texture_rectangle\n");
-        printf("GL_ARB_texture_float\n");
-        printf("GL_NV_float_buffer\n");
-        printf("GL_NV_depth_buffer_float\n");
-        printf("Exiting...\n");
+        printf(
+            "Unable to load the necessary extensions\n"
+            "This sample requires:\n"
+            "OpenGL version 2.0\n"
+            "GL_ARB_texture_rectangle\n"
+            "GL_ARB_texture_float\n"
+            "GL_NV_float_buffer\n"
+            "GL_NV_depth_buffer_float\n"
+            "Exiting...\n"
+            );
         exit(1);
     }
 
     init();
-    loadModel("bunny_closed.ply");
+    loadModel("casa.ply");
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);

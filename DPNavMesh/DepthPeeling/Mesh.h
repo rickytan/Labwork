@@ -67,6 +67,7 @@ class Edge: public vcg::Edge<UsedTypes> {};
 class Face: public vcg::Face<
     UsedTypes,
     vcg::face::VFAdj,
+    vcg::face::Normal3f,
     vcg::face::VertexRef,
     vcg::face::BitFlags
 > {};

@@ -184,6 +184,10 @@
 				RelativePath=".\plylib.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\RenderTarget.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Í·ÎÄ¼þ"
@@ -200,6 +204,10 @@
 			</File>
 			<File
 				RelativePath=".\plylib.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RenderTarget.h"
 				>
 			</File>
 			<File

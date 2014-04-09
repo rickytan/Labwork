@@ -16,7 +16,7 @@ public:
     void use() { glUseProgram(m_progId); }
     void unuse() { glUseProgram(0); }
     void setUniform(std::string name, GLfloat *val, int count);
-    void setTexture(std::string texname, GLint texunit);
+    void setTexture(std::string texname, GLint texunit, GLenum target, GLuint texid);
     void addVertexShader(std::string vertfile);
     void addFragmentShader(std::string fragfile);
     void linkProgram();

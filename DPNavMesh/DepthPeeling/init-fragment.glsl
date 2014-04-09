@@ -7,8 +7,8 @@ void main()
 	float yWorldPos = gl_TexCoord[0].y;
 	float diffuse = gl_TexCoord[0].z;
 
-	float i = floor(xWorldPos * 2.5 * scale);
-	float j = floor(yWorldPos * 2.5 * scale);
+	float i = floor(xWorldPos * 4. * scale);
+	float j = floor(yWorldPos * 4. * scale);
 	col = (fmod(i, 2.0) == 0.0 )? vec3(.4,.85,.0) : vec3(1.0);
 	gl_FragColor = vec4(col*gl_TexCoord[0].z,1.0);
 }
