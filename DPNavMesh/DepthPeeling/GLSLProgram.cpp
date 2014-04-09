@@ -66,7 +66,7 @@ void GLSLProgram::setUniform(std::string name, GLfloat *val, int count)
     }
 }
 
-void GLSLProgram::setTexture(std::string texname, GLint texunit, GLenum target, GLuint texid)
+void GLSLProgram::setTexture(std::string texname, GLuint texid, GLenum target, GLint texunit)
 {
     GLint linked;
     glGetProgramiv(m_progId, GL_LINK_STATUS, &linked);

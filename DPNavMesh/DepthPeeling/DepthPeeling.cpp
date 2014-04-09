@@ -15,6 +15,7 @@
 #include <gl/glut.h>
 
 #include <opencv/cv.h>
+#include <opencv/cxcore.h>
 #include <opencv/highgui.h>
 
 
@@ -47,9 +48,12 @@ static int g_currentLevel = 0;
 GLint g_FBOIds[MAX_PEELING_LEVEL] = {0};
 GLint g_TextureIds[MAX_PEELING_LEVEL] = {0};
 GLuint g_depthTexture;
+GLuint g_colorAttachTextures[2];
+GLuint g_depthFrameBuffer;
 
 GLSLProgram g_shaderFront;
 GLSLProgram g_shaderPeeling;
+GLSLProgram g_shaderFinal;
 
 RenderTarget g_renderTarget;
 
@@ -65,6 +69,10 @@ void initShader()
     g_shaderPeeling.addVertexShader("peel-vertex.glsl");
     g_shaderPeeling.addFragmentShader("peel-fragment.glsl");
     g_shaderPeeling.linkProgram();
+
+    g_shaderFinal.addVertexShader("show-vertex.glsl");
+    g_shaderFinal.addFragmentShader("show-fragment.glsl");
+    g_shaderFinal.linkProgram();
 }
 
 void createBuffer()
@@ -72,17 +80,46 @@ void createBuffer()
     g_renderTarget.generate(g_windowWidth, g_windowHeight);
 
     glGenTextures(1, &g_depthTexture);
+    glBindTexture(GL_TEXTURE_RECTANGLE_EXT, g_depthTexture);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D,0, GL_DEPTH_COMPONENT32F_NV, g_windowWidth, g_windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+    glGenTextures(2, g_colorAttachTextures);
+    glGenFramebuffersEXT(1, &g_depthFrameBuffer);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_depthFrameBuffer);
+    for (GLint i=0; i < 2; ++i)
+    {	
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, g_colorAttachTextures[i]);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB32F_ARB, g_windowWidth, g_windowHeight, 0, GL_RGBA, GL_FLOAT, 0);
+        glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + i,
+            GL_TEXTURE_RECTANGLE_ARB, g_colorAttachTextures[i], 0);
+    }
 }
 
 void deleteBuffer()
 {
     g_renderTarget.destroy();
+
+    glDeleteFramebuffersEXT(1, &g_depthFrameBuffer);
+    glDeleteTextures(2, g_colorAttachTextures);
+    glDeleteTextures(1, &g_depthTexture);
 }
 
 void initLight()
 {
+    static GLfloat light_pos[] = {0, 0, 2.0, 1.0};
+    static GLfloat ambient_color[] = {0.8, 0.8, 0.8, 1.0};
+    static GLfloat diffuse_color[] = {0.3, 0.3, 0.3, 1.0};
 
-
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT_AND_DIFFUSE, ambient_color);
 }
 
 void setupProjection()
@@ -102,12 +139,15 @@ void init()
     initShader();
     initLight();
     createBuffer();
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
     //glDisable(GL_CULL_FACE);
     glDisable(GL_NORMALIZE);
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+    glShadeModel(GL_SMOOTH);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    glDisable(GL_DITHER);
 
 
     glViewport(0, 0, g_windowWidth, g_windowHeight);
@@ -148,6 +188,8 @@ void doPeeling()
 {
     g_renderTarget.bindFrameBuffer(0);
 
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     glEnable(GL_DEPTH_TEST);
 
     g_shaderFront.use();
@@ -161,42 +203,53 @@ void doPeeling()
     cvShowImage("Debug", image);
     cvReleaseImage(&image);
 
+    int currId = 0, prevId = 0;
     for (int i=0; i < g_currentLevel; ++i)
     {
-        int currId = (i + 1) % 2;
-        int prevId = 1 - currId;
+        currId = (i + 1) % 2;
+        prevId = 1 - currId;
 
         g_renderTarget.bindFrameBuffer(currId);
-
+        glClearColor(0, 0, 0, 1.0);
+        glClearDepth(1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glDisable(GL_BLEND);
         glEnable(GL_DEPTH_TEST);
 
         g_shaderPeeling.use();
-        g_shaderPeeling.setTexture("DepthTex", 0, GL_TEXTURE_RECTANGLE_ARB, g_depthTexture);
+        g_shaderPeeling.setTexture("DepthTex", g_renderTarget.m_depthTextures[prevId], GL_TEXTURE_RECTANGLE_ARB, 0);
+        g_shaderPeeling.setUniform("scale", &g_modelScale, 1);
         drawModel();
         g_shaderPeeling.unuse();
     }
     
     glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
     glDrawBuffer(GL_BACK);
-    glEnable(GL_TEXTURE);
-    glBindTexture(GL_TEXTURE0, g_renderTarget.m_colorTextures[0]);
+    glDisable(GL_DEPTH_TEST);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    g_shaderFinal.use();
+    g_shaderFinal.setTexture("finalTex", g_renderTarget.m_colorTextures[prevId], GL_TEXTURE_RECTANGLE_ARB, 0);
+    
+    //glEnable(GL_TEXTURE_RECTANGLE_ARB);
+    //glBindTexture(GL_TEXTURE_RECTANGLE_ARB, g_renderTarget.m_colorTextures[0]);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, 1, 0, 1, -1, 1);
     glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
     glBegin(GL_QUADS);
     glTexCoord2f(0, 0);
-    glVertex2f(0, 0);
-    glTexCoord2f(0, 1);
-    glVertex2f(0, 1);
-    glTexCoord2f(1, 1);
-    glVertex2f(1, 1);
+    glVertex3f(0, 0, 0);
     glTexCoord2f(1, 0);
-    glVertex2f(1, 0);
+    glVertex3f(1, 0, 0);
+    glTexCoord2f(1, 1);
+    glVertex3f(1, 1, 0);
+    glTexCoord2f(0, 1);
+    glVertex3f(0, 1, 0);
     glEnd();
+    g_shaderFinal.unuse();
 }
 
 void display()

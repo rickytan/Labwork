@@ -6,7 +6,7 @@ class RenderTarget
 {
 public:
     RenderTarget();
-    virtual ~RenderTarget(void);
+    ~RenderTarget(void);
     void generate(int width, int height);
     void destroy();
     void bindFrameBuffer(int index);
