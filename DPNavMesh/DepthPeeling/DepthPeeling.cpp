@@ -1,17 +1,18 @@
+
+#pragma warning(disable:4819)
+#pragma warning(disable:4244)
+
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
 
-#include <gl/glew.h>
-#include <gl/glut.h>
-
-#include <vcg/complex/complex.h>
-#include <eigenlib/Eigen/Dense>
-
+#include "Mesh.h"
 #include "GLSLProgram.h"
 #include "Timer.h"
 
-#pragma warning(disable:4819)
+#include <gl/glew.h>
+#include <gl/glut.h>
+
 
 #ifdef _DEBUG
 #pragma comment(lib, "glew32.lib")
@@ -23,14 +24,14 @@ static int g_windowWidth = 800, g_windowHeight = 600;
 static float FOVY = 60.0f, ZNEAR = 1.0f, ZFAR = 10.0f;
 static int g_mainWindow = 0;
 static GLfloat g_modelScale = 1.0;
+static vcg::Point3f g_modelTranslate(0, 0, 0);
 static double g_globalTime = 0.0;
 static int g_mouseX = 0, g_mouseY = 0;
 
-using namespace Eigen;
 
-static Eigen::Vector3d g_eyeCenter(0.f, 0.f, 0.f);
-static Eigen::Vector3d g_eyePosition(0.f, 0.f, 5.f);
-static Eigen::Vector3d g_eyeUp(0.f, 1.f, 0.f);
+static vcg::Point3f g_eyeCenter(0.f, 0.f, 0.f);
+static vcg::Point3f g_eyePosition(0.f, 0.f, 5.f);
+static vcg::Point3f g_eyeUp(0.f, 1.f, 0.f);
 
 static const int MAX_PEELING_LEVEL = 8;
 
@@ -42,6 +43,8 @@ GLint g_TextureIds[MAX_PEELING_LEVEL] = {0};
 
 GLSLProgram g_shaderFront;
 
+Mesh g_mesh;
+vcg::GlTrimesh<Mesh> g_model;
 
 void initShader()
 {
@@ -57,6 +60,18 @@ void initLight()
 
 }
 
+void setupProjection()
+{
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    //gluPerspective(FOVY, (double)g_windowWidth/g_windowHeight, ZNEAR, ZFAR);
+    GLfloat ratio = 1.0 * g_windowWidth / g_windowHeight;
+    if (ratio > 1.0)
+        glOrtho(-ratio, ratio, -1, 1, ZNEAR, ZFAR);
+    else
+        glOrtho(-1, 1, -1.0 / ratio, 1.0 / ratio, ZNEAR, ZFAR);
+}
+
 void init()
 {
     initShader();
@@ -64,37 +79,46 @@ void init()
     //glDisable(GL_CULL_FACE);
     glDisable(GL_NORMALIZE);
     glEnable(GL_CULL_FACE);
-    
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     initLight();
 
     glViewport(0, 0, g_windowWidth, g_windowHeight);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(FOVY, (double)g_windowWidth/g_windowHeight, ZNEAR, ZFAR);
-    //glOrtho(-1, 1, -1, 1, -1, 10);
+    setupProjection();
+}
+
+void loadModel(std::string filename)
+{
+    cout << "Loading: " << filename << endl;
+    vcg::tri::io::Importer<Mesh>::Open(g_mesh, filename.c_str());
+    cout << "Mesh loaded with vertex: " << g_mesh.VN() << ", face: " << g_mesh.FN() << endl;
+    vcg::tri::UpdateBounding<Mesh>::Box(g_mesh);
+    vcg::tri::UpdateTopology<Mesh>::VertexFace(g_mesh);
+    g_modelTranslate = -g_mesh.bbox.Center();
+    g_modelScale = 1.0 / g_mesh.bbox.Diag();
+    g_model.m = &g_mesh;
 }
 
 void drawModel()
 {
     glColor3f(0, 1.0, 0.0);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glBegin(GL_QUADS);
-    glVertex3f(-1, -1, 0);
-    glVertex3f(-1,  1, 0);
-    glVertex3f( 1,  1, 0);
-    glVertex3f( 1, -1, 0);
-    glEnd();
-    glutSolidTeapot(2.0);
-    glutSolidSphere(2.0, 64, 32);
+    glPushMatrix();
+    glTranslatef(g_modelTranslate.X(), g_modelTranslate.Y(), g_modelTranslate.Z());
+    glScalef(g_modelScale, g_modelScale, g_modelScale);
+    g_model.Draw<vcg::GLW::DMFlat, vcg::GLW::CMNone, vcg::GLW::TMNone>();
+    glPopMatrix();
+
+    glutWireTeapot(0.5);
 }
 
 void doPeeling()
 {
-    g_shaderFront.use();
-    g_shaderFront.setUniform("scale", &g_modelScale, 1);
+    glEnable(GL_DEPTH_TEST);
+
+    //g_shaderFront.use();
+    //g_shaderFront.setUniform("scale", &g_modelScale, 1);
     drawModel();
-    g_shaderFront.unuse();
+    //g_shaderFront.unuse();
 }
 
 void display()
@@ -106,11 +130,10 @@ void display()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     gluLookAt(
-        g_eyePosition.x(), g_eyePosition.y(), g_eyePosition.z(),
-        g_eyeCenter.x(), g_eyeCenter.y(), g_eyeCenter.z(),
-        g_eyeUp.x(), g_eyeUp.y(), g_eyeUp.z()
+        g_eyePosition.X(), g_eyePosition.Y(), g_eyePosition.Z(),
+        g_eyeCenter.X(), g_eyeCenter.Y(), g_eyeCenter.Z(),
+        g_eyeUp.X(), g_eyeUp.Y(), g_eyeUp.Z()
         );
-    glScalef(g_modelScale, g_modelScale, g_modelScale);
 
     doPeeling();
 
@@ -158,10 +181,7 @@ void reshape(int width, int height)
 
             glViewport(0, 0, g_windowWidth, g_windowHeight);
 
-            glMatrixMode(GL_PROJECTION);
-            glLoadIdentity();
-            gluPerspective(FOVY, (double)g_windowWidth/g_windowHeight, ZNEAR, ZFAR);
-            glMatrixMode(GL_MODELVIEW);
+            setupProjection();
     }
 }
 
@@ -208,6 +228,7 @@ int main(int argc, char *argv[])
     }
 
     init();
+    loadModel("bunny_closed.obj");
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
@@ -215,7 +236,7 @@ int main(int argc, char *argv[])
     glutMouseFunc(mouse);
     glutMotionFunc(motion);
     //glutTimerFunc(1000/60, timer, 0);
-    glutIdleFunc(idle);
+    //glutIdleFunc(idle);
     
 
     glutMainLoop();
