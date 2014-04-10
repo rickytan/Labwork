@@ -52,12 +52,21 @@ void RenderTarget::destroy()
 
 void RenderTarget::bindFrameBuffer(int index)
 {
+    m_currentIdx = index;
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_frameBufferObjects[index]);
     glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 }
 
 void RenderTarget::readBuffer(int width, int height, GLenum format, GLenum type, GLvoid *buffer)
 {
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_frameBufferObjects[m_currentIdx]);
     glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
     glReadPixels(0, 0, width, height, format, type, buffer);
+}
+
+void RenderTarget::readDepth(int width, int height, GLvoid *buffer)
+{
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_frameBufferObjects[m_currentIdx]);
+    glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+    glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, buffer);
 }

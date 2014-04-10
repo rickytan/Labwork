@@ -174,6 +174,46 @@ void loadModel(std::string filename)
     g_model.m = &g_mesh;
 }
 
+void savePeeledMesh()
+{
+    int count = 0;
+    FILE *fp = NULL;
+    char file_name[128] = "PeeledMesh.ply";
+    fp = fopen(file_name, "r");
+    while(fp) {     // file already exists!
+        fclose(fp);
+        sprintf(file_name, "PeeledMesh%d.ply", count++);
+        fp = fopen(file_name, "r");
+    }
+    typedef struct {
+        float r, g, b, a;
+    } Color;
+    Color *data = new Color[g_windowWidth * g_windowHeight];
+    g_renderTarget.readBuffer(g_windowWidth, g_windowHeight, GL_RGBA, GL_FLOAT, data);
+    for (int i=0;i<g_windowWidth*g_windowHeight;++i)
+    {
+        if ( data[i].r > 0. || data[i].g > 0. || data[i].b > 0.) {
+            cout << "YES" << endl;
+        }
+    }
+
+    return;
+
+    Mesh out_mesh;
+    Mesh::VertexIterator vi = vcg::tri::Allocator<Mesh>::AddVertices(out_mesh, g_windowWidth * g_windowHeight);
+    for (int i=0;i<g_windowHeight;++i)
+    {
+        for (int j=0;j<g_windowWidth;++j, ++vi)
+        {
+            vi->P() = Mesh::CoordType(i, j, data[i*g_windowWidth + j].r);
+        }
+    }
+    
+    vcg::tri::io::Exporter<Mesh>::Save(out_mesh, file_name);
+    delete[] data;
+    cout << "File: " << file_name << " saved!" << endl;
+}
+
 void drawModel()
 {
     glColor3f(0, 1.0, 0.0);
@@ -213,11 +253,10 @@ void doPeeling()
     cvFlip(image, image);
     cvShowImage("Debug", image);
 */
-    int currId = 0, prevId = 0;
     for (int i=0; i < g_currentLevel; ++i)
     {
-        currId = (i + 1) % 2;
-        prevId = 1 - currId;
+        int currId = (i + 1) % 2;
+        int prevId = 1 - currId;
 
         g_renderTarget.bindFrameBuffer(currId);
         glClearColor(0, 0, 0, 1.0);
@@ -240,7 +279,7 @@ void doPeeling()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     g_shaderFinal.use();
-    g_shaderFinal.setTexture("finalTex", g_renderTarget.m_colorTextures[currId], GL_TEXTURE_RECTANGLE_ARB, 0);
+    g_shaderFinal.setTexture("finalTex", g_renderTarget.m_colorTextures[g_renderTarget.m_currentIdx], GL_TEXTURE_RECTANGLE_ARB, 0);
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -300,6 +339,39 @@ void keyboard(unsigned char key, int x, int y)
             break;
         case 'r':case 'R':
             g_modelRotateX = g_modelRotateY = 0.0;
+            glutPostRedisplay();
+            break;
+        case 's':case 'S':
+            savePeeledMesh();
+            break;
+        case 'z':
+            g_eyePosition = vcg::Point3f(0, 0, 5);
+            g_eyeUp = vcg::Point3f(0, 1, 0);
+            glutPostRedisplay();
+            break;
+        case 'Z':
+            g_eyePosition = vcg::Point3f(0, 0, -5);
+            g_eyeUp = vcg::Point3f(0, 1, 0);
+            glutPostRedisplay();
+            break;
+        case 'x':
+            g_eyePosition = vcg::Point3f(5, 0, 0);
+            g_eyeUp = vcg::Point3f(0, 1, 0);
+            glutPostRedisplay();
+            break;
+        case 'X':
+            g_eyePosition = vcg::Point3f(-5, 0, 0);
+            g_eyeUp = vcg::Point3f(0, 1, 0);
+            glutPostRedisplay();
+            break;
+        case 'y':
+            g_eyePosition = vcg::Point3f(0, 5, 0);
+            g_eyeUp = vcg::Point3f(0, 0, 1);
+            glutPostRedisplay();
+            break;
+        case 'Y':
+            g_eyePosition = vcg::Point3f(0, -5, 0);
+            g_eyeUp = vcg::Point3f(0, 0, 1);
             glutPostRedisplay();
             break;
         default:
@@ -415,7 +487,7 @@ int main(int argc, char *argv[])
     }
 
     init();
-    loadModel("bunny_closed.ply");
+    loadModel("casa.ply");
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
