@@ -33,8 +33,10 @@ static float FOVY = 60.0f, ZNEAR = 1.0f, ZFAR = 10.0f;
 static int g_mainWindow = 0;
 static GLfloat g_modelScale = 1.0;
 static vcg::Point3f g_modelTranslate(0, 0, 0);
+static GLfloat g_modelRotateX = 0.0, g_modelRotateY = 0.0;
 static double g_globalTime = 0.0;
 static int g_mouseX = 0, g_mouseY = 0;
+static int g_mouseButton = -1;
 
 
 static vcg::Point3f g_eyeCenter(0.f, 0.f, 0.f);
@@ -160,7 +162,6 @@ void loadModel(std::string filename)
     vcg::tri::io::Importer<Mesh>::Open(g_mesh, filename.c_str());
     cout << "Mesh loaded with vertex: " << g_mesh.VN() << ", face: " << g_mesh.FN() << endl;
     vcg::tri::UpdateBounding<Mesh>::Box(g_mesh);
-    vcg::tri::UpdateTopology<Mesh>::VertexFace(g_mesh);
     g_modelTranslate = -g_mesh.bbox.Center();
     vcg::Point3f vec = g_mesh.bbox.max - g_mesh.bbox.min;
     // a simple way
@@ -177,11 +178,13 @@ void drawModel()
 {
     glColor3f(0, 1.0, 0.0);
     glPushMatrix();
+    glRotatef(g_modelRotateX, 1, 0, 0);
+    glRotatef(g_modelRotateY, 0, 1, 0);
     glScalef(g_modelScale, g_modelScale, g_modelScale);
     glTranslatef(g_modelTranslate.X(), g_modelTranslate.Y(), g_modelTranslate.Z());
-    g_model.Draw<vcg::GLW::DMFlat, vcg::GLW::CMLast, vcg::GLW::TMNone>();
+    g_model.Draw<vcg::GLW::DMSmooth, vcg::GLW::CMLast, vcg::GLW::TMNone>();
     glPopMatrix();
-    glutSolidTeapot(.5);
+    //glutSolidTeapot(.5);
 }
 
 void doPeeling()
@@ -197,12 +200,19 @@ void doPeeling()
     drawModel();
     g_shaderFront.unuse();
 
-    IplImage *image = cvCreateImage(cvSize(g_windowWidth, g_windowHeight), 8, 3);
+    /************************************************************************/
+    /* Debug Show                                                           */
+    /************************************************************************/
+/*
+    static IplImage *image = NULL;
+    if (image) {
+        cvReleaseImage(&image);
+    }
+    image = cvCreateImage(cvSize(g_windowWidth, g_windowHeight), 8, 3);
     g_renderTarget.readBuffer(g_windowWidth, g_windowHeight, GL_BGR, GL_UNSIGNED_BYTE, image->imageData);
     cvFlip(image, image);
     cvShowImage("Debug", image);
-    cvReleaseImage(&image);
-
+*/
     int currId = 0, prevId = 0;
     for (int i=0; i < g_currentLevel; ++i)
     {
@@ -230,11 +240,10 @@ void doPeeling()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     g_shaderFinal.use();
-    g_shaderFinal.setTexture("finalTex", g_renderTarget.m_colorTextures[prevId], GL_TEXTURE_RECTANGLE_ARB, 0);
-    
-    //glEnable(GL_TEXTURE_RECTANGLE_ARB);
-    //glBindTexture(GL_TEXTURE_RECTANGLE_ARB, g_renderTarget.m_colorTextures[0]);
+    g_shaderFinal.setTexture("finalTex", g_renderTarget.m_colorTextures[currId], GL_TEXTURE_RECTANGLE_ARB, 0);
+
     glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
     glLoadIdentity();
     glOrtho(0, 1, 0, 1, -1, 1);
     glMatrixMode(GL_MODELVIEW);
@@ -249,6 +258,8 @@ void doPeeling()
     glTexCoord2f(0, 1);
     glVertex3f(0, 1, 0);
     glEnd();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
     g_shaderFinal.unuse();
 }
 
@@ -277,16 +288,18 @@ void keyboard(unsigned char key, int x, int y)
         case 27:
             exit(0);
             break;
-        case '-':
-        case '_':
+        case '-':case '_':
             if (g_currentLevel > 0) {
                 --g_currentLevel;
                 glutPostRedisplay();
             }
             break;
-        case '+':
-        case '=':
+        case '+':case '=':
             ++g_currentLevel;
+            glutPostRedisplay();
+            break;
+        case 'r':case 'R':
+            g_modelRotateX = g_modelRotateY = 0.0;
             glutPostRedisplay();
             break;
         default:
@@ -296,6 +309,27 @@ void keyboard(unsigned char key, int x, int y)
 
 void motion(int x, int y)
 {
+    if (x == g_mouseX && y == g_mouseY)
+        return;
+
+    int dx = x - g_mouseX;
+    int dy = y - g_mouseY ; 
+    switch(g_mouseButton) {
+        case GLUT_LEFT_BUTTON:
+            {
+                float dis = (g_eyeCenter - g_eyePosition).Norm();
+                g_modelRotateX += 1.0 * dy / dis;
+                g_modelRotateY += 1.0 * dx / dis;
+                glutPostRedisplay();
+            }
+            break;
+        case GLUT_MIDDLE_BUTTON:
+            break;
+        case GLUT_RIGHT_BUTTON:
+            break;
+        default:
+            break;
+    }
     g_mouseX = x;
     g_mouseY = y;
 }
@@ -305,14 +339,7 @@ void mouse(int button, int state, int x, int y)
     printf("Mouse: button %d, state %d, x %d, y %d\n", button, state, x, y);
     g_mouseX = x;
     g_mouseY = y;
-    switch(button) {
-        case GLUT_LEFT_BUTTON:
-            break;
-        case GLUT_RIGHT_BUTTON:
-            break;
-        case GLUT_MIDDLE_BUTTON:
-            break;
-    }
+    g_mouseButton = state ? -1 : button;
 }
 
 void reshape(int width, int height)
@@ -321,9 +348,10 @@ void reshape(int width, int height)
         g_windowHeight != height) {
             g_windowWidth = width;
             g_windowHeight = height;
+            deleteBuffer();
+            createBuffer();
 
             glViewport(0, 0, g_windowWidth, g_windowHeight);
-
             setupProjection();
     }
 }
@@ -387,7 +415,7 @@ int main(int argc, char *argv[])
     }
 
     init();
-    loadModel("casa.ply");
+    loadModel("bunny_closed.ply");
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
