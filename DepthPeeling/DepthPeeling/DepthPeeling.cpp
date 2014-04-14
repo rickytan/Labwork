@@ -351,7 +351,7 @@ void DoPeeling()
 		GLenum att[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT};
 		glDrawBuffers(1, att);
 
-		glClearColor(0, 0, 0, 1.0);
+		glClearColor(0, 0, 0, 0.0);
 		glClear(GL_COLOR_BUFFER_BIT );
 		glDisable(GL_DEPTH_TEST);
 

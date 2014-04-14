@@ -38,6 +38,7 @@ static double g_globalTime = 0.0;
 static int g_mouseX = 0, g_mouseY = 0;
 static int g_mouseButton = -1;
 
+static bool g_savingModel = false;
 
 static vcg::Point3f g_eyeCenter(0.f, 0.f, 0.f);
 static vcg::Point3f g_eyePosition(0.f, 0.f, 5.f);
@@ -185,19 +186,20 @@ void savePeeledMesh()
         sprintf(file_name, "PeeledMesh%d.ply", count++);
         fp = fopen(file_name, "r");
     }
-    typedef struct {
-        float r, g, b, a;
-    } Color;
-    Color *data = new Color[g_windowWidth * g_windowHeight];
-    g_renderTarget.readBuffer(g_windowWidth, g_windowHeight, GL_RGBA, GL_FLOAT, data);
+
+    Mesh::CoordType *data = new Mesh::CoordType[g_windowWidth * g_windowHeight];
+    g_renderTarget.readVertex(g_windowWidth, g_windowHeight, GL_RGB, GL_FLOAT, data);
+    /*
     for (int i=0;i<g_windowWidth*g_windowHeight;++i)
     {
-        if ( data[i].r > 0. || data[i].g > 0. || data[i].b > 0.) {
+        if ( fabsf(data[i].r) > 0. || fabsf(data[i].g) > 0. || fabsf(data[i].b) > 0.) {
             cout << "YES" << endl;
         }
     }
+    
 
     return;
+    */
 
     Mesh out_mesh;
     Mesh::VertexIterator vi = vcg::tri::Allocator<Mesh>::AddVertices(out_mesh, g_windowWidth * g_windowHeight);
@@ -205,7 +207,7 @@ void savePeeledMesh()
     {
         for (int j=0;j<g_windowWidth;++j, ++vi)
         {
-            vi->P() = Mesh::CoordType(i, j, data[i*g_windowWidth + j].r);
+            vi->P() = data[i*g_windowWidth + j];
         }
     }
     
@@ -237,6 +239,8 @@ void doPeeling()
 
     g_shaderFront.use();
     g_shaderFront.setUniform("scale", &g_modelScale, 1);
+    g_shaderFront.setUniform("znear", &ZNEAR, 1);
+    g_shaderFront.setUniform("zfar", &ZFAR, 1);
     drawModel();
     g_shaderFront.unuse();
 
@@ -269,6 +273,8 @@ void doPeeling()
         g_shaderPeeling.use();
         g_shaderPeeling.setTexture("DepthTex", g_renderTarget.m_depthTextures[prevId], GL_TEXTURE_RECTANGLE_ARB, 0);
         g_shaderPeeling.setUniform("scale", &g_modelScale, 1);
+        g_shaderPeeling.setUniform("znear", &ZNEAR, 1);
+        g_shaderPeeling.setUniform("zfar", &ZFAR, 1);
         drawModel();
         g_shaderPeeling.unuse();
     }
@@ -487,7 +493,7 @@ int main(int argc, char *argv[])
     }
 
     init();
-    loadModel("casa.ply");
+    loadModel("bunny_closed.ply");
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
