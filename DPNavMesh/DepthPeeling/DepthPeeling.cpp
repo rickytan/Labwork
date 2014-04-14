@@ -292,7 +292,7 @@ void doPeeling()
         g_shaderPeeling.setUniform("znear", &ZNEAR, 1);
         g_shaderPeeling.setUniform("zfar", &ZFAR, 1);
         GLfloat ratio = 1.0 * g_windowWidth / g_windowHeight;
-        g_shaderFront.setUniform("ratio", &ratio, 1);
+        g_shaderPeeling.setUniform("ratio", &ratio, 1);
         drawModel();
         g_shaderPeeling.unuse();
     }

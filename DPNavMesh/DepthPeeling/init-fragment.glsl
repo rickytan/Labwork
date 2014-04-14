@@ -21,7 +21,7 @@ void main()
 	gl_FragData[0] = vec4(col*gl_TexCoord[0].z,1.0);
 
 	if (ratio < 1.0)
-	    gl_FragData[1] = vec4(vertex.x, vertex.y * ratio, -(znear + (zfar - znear) * gl_FragCoord.z), 1.0);
+	    gl_FragData[1] = vec4(vertex.x, vertex.y / ratio, -(znear + (zfar - znear) * gl_FragCoord.z), 1.0);
 	else
 	    gl_FragData[1] = vec4(vertex.x * ratio, vertex.y, -(znear + (zfar - znear) * gl_FragCoord.z), 1.0);
 }
