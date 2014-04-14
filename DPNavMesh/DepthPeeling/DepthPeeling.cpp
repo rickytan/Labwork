@@ -192,25 +192,57 @@ void savePeeledMesh()
     /*
     for (int i=0;i<g_windowWidth*g_windowHeight;++i)
     {
-        if ( fabsf(data[i].r) > 0. || fabsf(data[i].g) > 0. || fabsf(data[i].b) > 0.) {
-            cout << "YES" << endl;
-        }
+    if ( fabsf(data[i].r) > 0. || fabsf(data[i].g) > 0. || fabsf(data[i].b) > 0.) {
+    cout << "YES" << endl;
     }
-    
+    }
+
 
     return;
     */
 
     Mesh out_mesh;
     Mesh::VertexIterator vi = vcg::tri::Allocator<Mesh>::AddVertices(out_mesh, g_windowWidth * g_windowHeight);
+    Mesh::FaceIterator fi = vcg::tri::Allocator<Mesh>::AddFaces(out_mesh, g_windowWidth * g_windowHeight * 2);
     for (int i=0;i<g_windowHeight;++i)
     {
         for (int j=0;j<g_windowWidth;++j, ++vi)
         {
             vi->P() = data[i*g_windowWidth + j];
+            if (vi->cP().Z() > -ZNEAR) {
+                vcg::tri::Allocator<Mesh>::DeleteVertex(out_mesh, *vi);
+            }
+            if (i && j) {
+                Mesh::VertexType &v0 = *(vi - g_windowWidth - 1);
+                Mesh::VertexType &v1 = *(vi - g_windowWidth - 0);
+                Mesh::VertexType &v2 = *(vi - 0);
+                Mesh::VertexType &v3 = *(vi - 1);
+
+                static Mesh::ScalarType NormThreshold = cosf(20 * M_PI / 180);
+                Mesh::ScalarType n0 = ((v0.cP() - v1.cP()) ^ (v2.cP() - v1.cP())).Normalize().Z();
+                Mesh::ScalarType n1 = ((v2.cP() - v3.cP()) ^ (v0.cP() - v3.cP())).Normalize().Z();
+
+                if (v0.IsD() || v1.IsD() || v2.IsD() || n0 < NormThreshold)
+                    vcg::tri::Allocator<Mesh>::DeleteFace(out_mesh, *fi);
+                else {
+                    fi->V(0) = &v0;
+                    fi->V(1) = &v1;
+                    fi->V(2) = &v2;
+                }
+                ++fi;
+
+                if (v0.IsD() || v3.IsD() || v2.IsD() || n1 < NormThreshold)
+                    vcg::tri::Allocator<Mesh>::DeleteFace(out_mesh, *fi);
+                else {
+                    fi->V(0) = &v2;
+                    fi->V(1) = &v3;
+                    fi->V(2) = &v0;
+                }
+                ++fi;
+            }
         }
     }
-    
+
     vcg::tri::io::Exporter<Mesh>::Save(out_mesh, file_name);
     delete[] data;
     cout << "File: " << file_name << " saved!" << endl;
@@ -247,16 +279,16 @@ void doPeeling()
     /************************************************************************/
     /* Debug Show                                                           */
     /************************************************************************/
-/*
+    /*
     static IplImage *image = NULL;
     if (image) {
-        cvReleaseImage(&image);
+    cvReleaseImage(&image);
     }
     image = cvCreateImage(cvSize(g_windowWidth, g_windowHeight), 8, 3);
     g_renderTarget.readBuffer(g_windowWidth, g_windowHeight, GL_BGR, GL_UNSIGNED_BYTE, image->imageData);
     cvFlip(image, image);
     cvShowImage("Debug", image);
-*/
+    */
     for (int i=0; i < g_currentLevel; ++i)
     {
         int currId = (i + 1) % 2;
@@ -278,7 +310,7 @@ void doPeeling()
         drawModel();
         g_shaderPeeling.unuse();
     }
-    
+
     glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
     glDrawBuffer(GL_BACK);
     glDisable(GL_DEPTH_TEST);
@@ -479,17 +511,17 @@ int main(int argc, char *argv[])
         "GL_ARB_texture_float "
         "GL_NV_float_buffer "
         "GL_NV_depth_buffer_float ")) {
-        printf(
-            "Unable to load the necessary extensions\n"
-            "This sample requires:\n"
-            "OpenGL version 2.0\n"
-            "GL_ARB_texture_rectangle\n"
-            "GL_ARB_texture_float\n"
-            "GL_NV_float_buffer\n"
-            "GL_NV_depth_buffer_float\n"
-            "Exiting...\n"
-            );
-        exit(1);
+            printf(
+                "Unable to load the necessary extensions\n"
+                "This sample requires:\n"
+                "OpenGL version 2.0\n"
+                "GL_ARB_texture_rectangle\n"
+                "GL_ARB_texture_float\n"
+                "GL_NV_float_buffer\n"
+                "GL_NV_depth_buffer_float\n"
+                "Exiting...\n"
+                );
+            exit(1);
     }
 
     init();
@@ -502,7 +534,7 @@ int main(int argc, char *argv[])
     glutMotionFunc(motion);
     //glutTimerFunc(1000/60, timer, 0);
     //glutIdleFunc(idle);
-    
+
 
     glutMainLoop();
 
