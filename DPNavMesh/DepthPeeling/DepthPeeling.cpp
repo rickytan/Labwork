@@ -50,9 +50,6 @@ static int g_currentLevel = 0;
 
 GLint g_FBOIds[MAX_PEELING_LEVEL] = {0};
 GLint g_TextureIds[MAX_PEELING_LEVEL] = {0};
-GLuint g_depthTexture;
-GLuint g_colorAttachTextures[2];
-GLuint g_depthFrameBuffer;
 
 GLSLProgram g_shaderFront;
 GLSLProgram g_shaderPeeling;
@@ -81,38 +78,11 @@ void initShader()
 void createBuffer()
 {
     g_renderTarget.generate(g_windowWidth, g_windowHeight);
-
-    glGenTextures(1, &g_depthTexture);
-    glBindTexture(GL_TEXTURE_RECTANGLE_EXT, g_depthTexture);
-    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D,0, GL_DEPTH_COMPONENT32F_NV, g_windowWidth, g_windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-
-    glGenTextures(2, g_colorAttachTextures);
-    glGenFramebuffersEXT(1, &g_depthFrameBuffer);
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, g_depthFrameBuffer);
-    for (GLint i=0; i < 2; ++i)
-    {	
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, g_colorAttachTextures[i]);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB32F_ARB, g_windowWidth, g_windowHeight, 0, GL_RGBA, GL_FLOAT, 0);
-        glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + i,
-            GL_TEXTURE_RECTANGLE_ARB, g_colorAttachTextures[i], 0);
-    }
 }
 
 void deleteBuffer()
 {
     g_renderTarget.destroy();
-
-    glDeleteFramebuffersEXT(1, &g_depthFrameBuffer);
-    glDeleteTextures(2, g_colorAttachTextures);
-    glDeleteTextures(1, &g_depthTexture);
 }
 
 void initLight()
@@ -203,7 +173,7 @@ void savePeeledMesh()
 
     Mesh out_mesh;
     Mesh::VertexIterator vi = vcg::tri::Allocator<Mesh>::AddVertices(out_mesh, g_windowWidth * g_windowHeight);
-    Mesh::FaceIterator fi = vcg::tri::Allocator<Mesh>::AddFaces(out_mesh, g_windowWidth * g_windowHeight * 2);
+    Mesh::FaceIterator fi = vcg::tri::Allocator<Mesh>::AddFaces(out_mesh, (g_windowWidth - 1) * (g_windowHeight - 1) * 2);
     for (int i=0;i<g_windowHeight;++i)
     {
         for (int j=0;j<g_windowWidth;++j, ++vi)
@@ -218,25 +188,37 @@ void savePeeledMesh()
                 Mesh::VertexType &v2 = *(vi - 0);
                 Mesh::VertexType &v3 = *(vi - 1);
 
-                static Mesh::ScalarType NormThreshold = cosf(20 * M_PI / 180);
-                Mesh::ScalarType n0 = ((v0.cP() - v1.cP()) ^ (v2.cP() - v1.cP())).Normalize().Z();
-                Mesh::ScalarType n1 = ((v2.cP() - v3.cP()) ^ (v0.cP() - v3.cP())).Normalize().Z();
+                static Mesh::ScalarType NormThreshold = cosf(80 * M_PI / 180);
 
-                if (v0.IsD() || v1.IsD() || v2.IsD() || n0 < NormThreshold)
+                if (v0.IsD() || v1.IsD() || v2.IsD()) {
                     vcg::tri::Allocator<Mesh>::DeleteFace(out_mesh, *fi);
+                }
                 else {
-                    fi->V(0) = &v0;
-                    fi->V(1) = &v1;
-                    fi->V(2) = &v2;
+                    Mesh::CoordType c0 = ((v0.cP() - v1.cP()) ^ (v2.cP() - v1.cP())).Normalize();
+                    Mesh::ScalarType n0 = ((v0.cP() - v1.cP()) ^ (v2.cP() - v1.cP())).Normalize().Z();
+                    if (fabsf(n0) < NormThreshold)
+                        vcg::tri::Allocator<Mesh>::DeleteFace(out_mesh, *fi);
+                    else {
+                        fi->V(0) = &v0;
+                        fi->V(1) = &v1;
+                        fi->V(2) = &v2;
+                    }
                 }
                 ++fi;
 
-                if (v0.IsD() || v3.IsD() || v2.IsD() || n1 < NormThreshold)
+                if (v0.IsD() || v3.IsD() || v2.IsD()) {
                     vcg::tri::Allocator<Mesh>::DeleteFace(out_mesh, *fi);
+                }
                 else {
-                    fi->V(0) = &v2;
-                    fi->V(1) = &v3;
-                    fi->V(2) = &v0;
+                    Mesh::CoordType c1 = ((v2.cP() - v3.cP()) ^ (v0.cP() - v3.cP())).Normalize();
+                    Mesh::ScalarType n1 = ((v2.cP() - v3.cP()) ^ (v0.cP() - v3.cP())).Normalize().Z();
+                    if (fabsf(n1) < NormThreshold)
+                        vcg::tri::Allocator<Mesh>::DeleteFace(out_mesh, *fi);
+                    else {
+                        fi->V(0) = &v2;
+                        fi->V(1) = &v3;
+                        fi->V(2) = &v0;
+                    }
                 }
                 ++fi;
             }
