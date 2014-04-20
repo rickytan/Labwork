@@ -150,7 +150,7 @@ void genMesh(Mesh &mesh)
 
 void test()
 {
-	const char *mesh_file0 = "single_removed0.ply", *mesh_file1 = "single_removed1.ply";
+	const char *mesh_file0 = "PeeledMesh2.ply", *mesh_file1 = "PeeledMesh1.ply";
 	int final_size = 1000;
 	Mesh m0, m1;
 	
@@ -184,14 +184,15 @@ int main(int argc, char* argv[])
 {
 	test();
 	return 0;
-
+/*
 	Mesh m;
 	genMesh(m);
 	vcg::tri::io::Exporter<Mesh>::Save(m, "generated.ply");
 	return 0;
-    
-	char *mesh_file	= "face_mesh0.ply";
-	char *out_file	= "face_mesh0_simp.ply";
+    */
+/*
+	char *mesh_file	= "PeeledMesh.ply";
+	char *out_file	= "PeeledMesh0.ply";
 	int final_size	= 1000;
 
 	printf("Loading %s\n", mesh_file);
@@ -220,5 +221,6 @@ int main(int argc, char* argv[])
 	vcg::tri::io::Exporter<Mesh>::Save(mesh, out_file);
 
 	return 0;
+    */
 }
 

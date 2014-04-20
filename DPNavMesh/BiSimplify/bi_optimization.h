@@ -195,8 +195,9 @@ namespace vcg{
             d = SingleVertexRemover<MeshType>::Remove(*m.Cm());
             printf("%d single vertex deleted!\n",d);
 
+            ScalarType thres = CalulateMinEdgeLength();
 			CorresPairContainer cpc;
-			FindCorresponding(cpc);
+			FindCorresponding(cpc, thres / 2);
 
 			vcg::tri::InitVertexIMark(m);
 			vcg::tri::InitVertexIMark(*m.Cm());
@@ -244,7 +245,59 @@ namespace vcg{
 			return false;
 		}
 
+        ScalarType CalulateMinEdgeLength()
+        {
+            vcg::tri::UpdateFlags<MeshType>::VertexClearV(m);
+            vcg::tri::UpdateFlags<MeshType>::VertexClearV(*m.Cm());
 
+            ScalarType result = std::numeric_limits<ScalarType>::max();
+
+            typedef std::vector<MeshType::FaceType>::iterator FI;
+            for (FI fi = m.face.begin(); fi!=m.face.end(); ++fi)
+            {
+                MeshType::VertexType *v0 = fi->V(0), *v1 = fi->V(1), *v2 = fi->V(2);
+
+                CoordType p0 = v0->cP(), p1 = v1->cP(), p2 = v2->cP();
+                p0.Z() = 0;
+                p1.Z() = 0;
+                p2.Z() = 0;
+
+                if (!v0->IsV() || !v1->IsV()) {
+                    result = std::min(result, (p0-p1).Norm());
+                }
+                if (!v2->IsV() || !v1->IsV()) {
+                    result = std::min(result, (p2-p1).Norm());
+                }
+                if (!v0->IsV() || !v2->IsV()) {
+                    result = std::min(result, (p0-p2).Norm());
+                }
+                v0->SetV();v1->SetV();v2->SetV();
+            }
+
+            for (FI fi = m.Cm()->face.begin(); fi!=m.Cm()->face.end(); ++fi)
+            {
+                MeshType::VertexType *v0 = fi->V(0), *v1 = fi->V(1), *v2 = fi->V(2);
+
+                CoordType p0 = v0->cP(), p1 = v1->cP(), p2 = v2->cP();
+                p0.Z() = 0;
+                p1.Z() = 0;
+                p2.Z() = 0;
+
+                if (!v0->IsV() || !v1->IsV()) {
+                    result = std::min(result, (p0-p1).Norm());
+                }
+                if (!v2->IsV() || !v1->IsV()) {
+                    result = std::min(result, (p2-p1).Norm());
+                }
+                if (!v0->IsV() || !v2->IsV()) {
+                    result = std::min(result, (p0-p2).Norm());
+                }
+                v0->SetV();v1->SetV();v2->SetV();
+            }
+            vcg::tri::UpdateFlags<MeshType>::VertexClearV(m);
+            vcg::tri::UpdateFlags<MeshType>::VertexClearV(*m.Cm());
+            return result;
+        }
 
 		///erase from the heap the operations that are out of date
 		void ClearHeapOld()
@@ -263,7 +316,7 @@ namespace vcg{
 		}
 
 	private:
-		void FindCorresponding(CorresPairContainer &cpc)
+        void FindCorresponding(CorresPairContainer &cpc, ScalarType threshold = std::numeric_limits<ScalarType>::epsilon())
 		{
 			Vertex2dConstDataWrapper<MeshType> dw(m);
 			KdTree<ScalarType> tree(dw);
@@ -277,8 +330,8 @@ namespace vcg{
 				int neighbor = tree.getNeighborId(0);
 
 				const CoordType loc = m.vert[neighbor].cP();
-				if (fabs(loc[0] - location[0]) < std::numeric_limits<ScalarType>::epsilon() &&
-					fabs(loc[1] - location[1]) < std::numeric_limits<ScalarType>::epsilon()) {
+				if (fabs(loc[0] - location[0]) < threshold &&
+					fabs(loc[1] - location[1]) < threshold) {
 						m.Cm()->vert[i].Cv() = &(m.vert[neighbor]);
 						m.vert[neighbor].Cv() = &(m.Cm()->vert[i]);
 						++corresVnum;

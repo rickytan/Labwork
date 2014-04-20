@@ -19,7 +19,6 @@ public:
     static int Remove(TriMeshType &mesh) {
         vcg::tri::UpdateTopology<TriMeshType>::VertexFace(mesh);
         int deletedVextex = 0;
-        VertexPointContainer ver_to_delete;
         for (VI vi=mesh.vert.begin();vi!=mesh.vert.end();++vi)
         {
             if (!vi->IsD() && vi->IsR()) {
@@ -30,13 +29,13 @@ public:
                         break;
                 }
                 if (fn <= 0 && vi->IsW()) {  // Single Vertex, has no face arround it
-                    ver_to_delete.push_back(&*vi);
+                    vcg::tri::Allocator<TriMeshType>::DeleteVertex(mesh, *vi);
+                    ++deletedVextex;
                 }
             }
         }
-        for (VPCI v = ver_to_delete.begin(); v != ver_to_delete.end(); ++v)
-            vcg::tri::Allocator<TriMeshType>::DeleteVertex(mesh, **v);
-        return ver_to_delete.size();
+        vcg::tri::Allocator<TriMeshType>::CompactVertexVector(mesh);
+        return deletedVextex;
     }
 };
 #endif  // end of __SINGLE_VERTEX_REMOVER
