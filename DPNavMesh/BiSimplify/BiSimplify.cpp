@@ -150,7 +150,7 @@ void genMesh(Mesh &mesh)
 
 void test()
 {
-	const char *mesh_file0 = "PeeledMesh2.ply", *mesh_file1 = "PeeledMesh1.ply";
+	const char *mesh_file0 = "PeeledMesh1.ply", *mesh_file1 = "PeeledMesh2.ply";
 	int final_size = 1000;
 	Mesh m0, m1;
 	
@@ -162,6 +162,7 @@ void test()
 
 	vcg::tri::BiTriEdgeCollapseQuadricParameter<Mesh::CoordType> params;
 	params.QualityThr = .3;
+    params.NormalCheck = true;
 
 	vcg::tri::UpdateBounding<Mesh>::Box(m0);
 	vcg::tri::UpdateBounding<Mesh>::Box(m1);

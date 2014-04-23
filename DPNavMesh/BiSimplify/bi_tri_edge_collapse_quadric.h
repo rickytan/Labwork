@@ -46,7 +46,11 @@ namespace vcg {
             typedef VertexPairType VertexPair;
             typedef BiTriEdgeCollapseQuadricParameter<typename TriMeshType::CoordType> QParameter;
 
-            BiTriEdgeCollapse(const VertexPair &p, int i, vcg::BaseParameterClass *pp): TriEdgeCollapseQuadric<TriMeshType, VertexPair, MYTYPE>(p,i,pp){}
+            BiTriEdgeCollapse(const VertexPair &p, int i, vcg::BaseParameterClass *pp): TriEdgeCollapseQuadric<TriMeshType, VertexPair, MYTYPE>(p,i,pp){
+                this->localMark = i;
+                this->pos=p;
+                this->_priority = ComputePriority(pp);
+            }
             /*
             计算使总Error 最小的两个对应点的位置
             */
