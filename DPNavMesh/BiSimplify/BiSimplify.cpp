@@ -150,7 +150,7 @@ void genMesh(Mesh &mesh)
 
 void test()
 {
-	const char *mesh_file0 = "PeeledMesh1.ply", *mesh_file1 = "PeeledMesh2.ply";
+	const char *mesh_file0 = "casa_peeled0.ply", *mesh_file1 = "casa_peeled1.ply";
 	int final_size = 1000;
 	Mesh m0, m1;
 	

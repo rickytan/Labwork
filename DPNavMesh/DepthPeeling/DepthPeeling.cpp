@@ -21,9 +21,9 @@
 
 #ifdef _DEBUG
 #pragma comment(lib, "glew32.lib")
-#pragma comment(lib, "cv200d.lib")
-#pragma comment(lib, "cxcore200d.lib")
-#pragma comment(lib, "highgui200d.lib")
+//#pragma comment(lib, "cv200d.lib")
+//#pragma comment(lib, "cxcore200d.lib")
+//#pragma comment(lib, "highgui200d.lib")
 #else
 #pragma comment(lib, "glew32.lib")
 #endif
@@ -469,7 +469,7 @@ void printGLInfo()
 {
     fprintf(stdout, "OpenGL info:\n"
         "{\n"
-        "\tExtensions: %s\n"
+        "\tExtensions: %.52s\n"
         "\tVendor: %s\n"
         "\tRenderer: %s\n"
         "\tVersion: %s\n"
@@ -511,7 +511,7 @@ int main(int argc, char *argv[])
     }
 
     init();
-    loadModel("bunny_closed.ply");
+    loadModel("casa.ply");
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
