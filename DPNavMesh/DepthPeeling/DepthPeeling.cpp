@@ -479,6 +479,8 @@ void printGLInfo()
 
 int main(int argc, char *argv[])
 {
+    char *model_name = argc > 1 ? argv[1] : "casa.ply";
+
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
     glutInitWindowSize(g_windowWidth, g_windowHeight);
@@ -511,7 +513,7 @@ int main(int argc, char *argv[])
     }
 
     init();
-    loadModel("casa.ply");
+    loadModel(model_name);
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);

@@ -15,8 +15,12 @@ namespace vcg {
         class BiTriEdgeCollapseQuadricParameter: public TriEdgeCollapseQuadricParameter
         {
         public:
-            BiTriEdgeCollapseQuadricParameter(): alignDir(CoordType(0, 0, 1)), TriEdgeCollapseQuadricParameter() {}
+            BiTriEdgeCollapseQuadricParameter()
+                : alignDir(CoordType(0, 0, 1))
+                , FlipCheck(false)
+                , TriEdgeCollapseQuadricParameter() {}
             CoordType alignDir;
+            bool FlipCheck;
         };
 
         template <class MeshType>
@@ -46,7 +50,7 @@ namespace vcg {
             typedef VertexPairType VertexPair;
             typedef BiTriEdgeCollapseQuadricParameter<typename TriMeshType::CoordType> QParameter;
 
-            BiTriEdgeCollapse(const VertexPair &p, int i, vcg::BaseParameterClass *pp): TriEdgeCollapseQuadric<TriMeshType, VertexPair, MYTYPE>(p,i,pp){
+            BiTriEdgeCollapse(const VertexPair &p, int i, vcg::BaseParameterClass *pp) {
                 this->localMark = i;
                 this->pos=p;
                 this->_priority = ComputePriority(pp);
@@ -144,8 +148,6 @@ namespace vcg {
                     }
                 }
 
-
-
                 //return CoordType::Construct(x);
             }
 
@@ -201,6 +203,10 @@ namespace vcg {
                             ndiff=nn.dot(on[i++]);
                             if(ndiff<MinCos) MinCos=ndiff;
                         }
+                        if (pp->FlipCheck) {
+                            nn=NormalizedNormal(*x.F());
+
+                        }
                         if(pp->QualityCheck){
                             qt= QualityFace(*x.F());
                             if(qt<MinQual) MinQual=qt;
@@ -221,6 +227,7 @@ namespace vcg {
                         }
                     }
                 }
+
                 QuadricType qq=QH::Qd(v[0]);
                 qq+=QH::Qd(v[1]);
                 Point3d tpd=Point3d::Construct(v[1]->P());
