@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NuiSensorChooser", "NuiSens
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Depth2PointCloud", "Depth2PointCloud\Depth2PointCloud.vcxproj", "{8CEB196C-AF19-4C1C-BD5E-289F8E1530D6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PCLRegistration", "PCLRegistration\PCLRegistration.vcxproj", "{C320F6F9-A39F-4CFB-83F7-CC16661C2111}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -37,6 +39,12 @@ Global
 		{8CEB196C-AF19-4C1C-BD5E-289F8E1530D6}.Release|Win32.ActiveCfg = Release|Win32
 		{8CEB196C-AF19-4C1C-BD5E-289F8E1530D6}.Release|Win32.Build.0 = Release|Win32
 		{8CEB196C-AF19-4C1C-BD5E-289F8E1530D6}.Release|x64.ActiveCfg = Release|Win32
+		{C320F6F9-A39F-4CFB-83F7-CC16661C2111}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C320F6F9-A39F-4CFB-83F7-CC16661C2111}.Debug|Win32.Build.0 = Debug|Win32
+		{C320F6F9-A39F-4CFB-83F7-CC16661C2111}.Debug|x64.ActiveCfg = Debug|Win32
+		{C320F6F9-A39F-4CFB-83F7-CC16661C2111}.Release|Win32.ActiveCfg = Release|Win32
+		{C320F6F9-A39F-4CFB-83F7-CC16661C2111}.Release|Win32.Build.0 = Release|Win32
+		{C320F6F9-A39F-4CFB-83F7-CC16661C2111}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1294,7 +1294,7 @@ HRESULT KinectFusionProcessor::GetKinectFrames(bool &colorSynchronized)
     currentDepthFrameTime = imageFrame.liTimeStamp.QuadPart;
 
     // Release the Kinect camera frame
-    m_pNuiSensor->NuiImageStreamReleaseFrame(m_pDepthStreamHandle, &imageFrame);
+    hr = m_pNuiSensor->NuiImageStreamReleaseFrame(m_pDepthStreamHandle, &imageFrame);
 
     if (FAILED(hr))
     {

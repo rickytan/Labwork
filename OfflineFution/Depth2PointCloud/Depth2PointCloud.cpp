@@ -17,8 +17,9 @@
 
 #include "mesh.h"
 
+#include "PointCloudRegistrator.h"
+
 using namespace std;
-using namespace cv;
 
 
 class OpenCVApp {
@@ -38,6 +39,7 @@ public:
         , m_pCameraPoseFinder(nullptr)
         , m_bNearMode(FALSE)
     {
+        
     }
     ~OpenCVApp() {
         UnInitialize();
@@ -233,6 +235,8 @@ public:
 
     void SaveToPLY()
     {
+        static int fileID = 0;
+        char fileName[MAX_PATH] = "";
         Mesh mesh;
         int imageWidth = m_depthImage.cols;
         int imageHeight = m_depthImage.rows;
@@ -251,7 +255,8 @@ public:
                 vi->P() = Mesh::CoordType(x, y, -depth);
             }
         }
-        vcg::tri::io::Exporter<Mesh>::Save(mesh, "point_cloud.ply");
+        sprintf(fileName, "point_cloud%d.ply", fileID++);
+        vcg::tri::io::Exporter<Mesh>::Save(mesh, fileName);
     }
 
     void SetNearMode(BOOL bNearmode)
@@ -308,6 +313,11 @@ protected:
 
     NUI_IMAGE_RESOLUTION m_imageResolution;
     INuiFusionCameraPoseFinder *m_pCameraPoseFinder;
+
+    NUI_FUSION_IMAGE_FRAME *m_pFusionDepthFrame;
+    NUI_FUSION_IMAGE_FRAME *m_pFusionColorFrame;
+
+    Matrix4 m_worldToCameraTransform;
 
     HANDLE m_hNextDepthFrameEvent;
     HANDLE m_hProcessStopEvent;

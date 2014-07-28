@@ -11,9 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{8CEB196C-AF19-4C1C-BD5E-289F8E1530D6}</ProjectGuid>
+    <ProjectGuid>{C320F6F9-A39F-4CFB-83F7-CC16661C2111}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Depth2PointCloud</RootNamespace>
+    <RootNamespace>PCLRegistration</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -41,56 +41,58 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\NuiSensorChooser;$(PCL_ROOT)\3rdParty\FLANN\include;$(PCL_ROOT)\include\pcl-1.6;$(PCL_ROOT)\3rdParty\Boost\include;$(VCGlib);$(IncludePath);$(KINECTSDK10_DIR)\inc;$(KINECT_TOOLKIT_DIR)inc;..\PCLRegistration</IncludePath>
-    <LibraryPath>E:\usr\lib\opencv2\x86\vc12\lib;E:\usr\lib;$(LibraryPath);$(SolutionDir)$(Configuration);$(KINECTSDK10_DIR)\lib\x86;$(KINECT_TOOLKIT_DIR)lib\x86</LibraryPath>
+    <IncludePath>$(PCL_ROOT)\3rdParty\FLANN\include;$(PCL_ROOT)\include\pcl-1.6;$(PCL_ROOT)\3rdParty\Boost\include;$(IncludePath);$(KINECTSDK10_DIR)\inc;$(KINECT_TOOLKIT_DIR)inc</IncludePath>
+    <LibraryPath>$(PCL_ROOT)\3rdParty\FLANN\lib;$(PCL_ROOT)\3rdParty\Boost\lib;E:\usr\lib;$(LibraryPath);$(PCL_ROOT)\lib;$(KINECTSDK10_DIR)\lib\x86;$(KINECT_TOOLKIT_DIR)lib\x86</LibraryPath>
+    <ExecutablePath>$(PCL_ROOT)\bin;E:\usr\dll;$(ExecutablePath)</ExecutablePath>
+    <LibraryWPath>$(LibraryWPath)</LibraryWPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\NuiSensorChooser;$(PCL_ROOT)\3rdParty\FLANN\include;$(PCL_ROOT)\include\pcl-1.6;$(PCL_ROOT)\3rdParty\Boost\include;$(VCGlib);$(IncludePath);$(KINECTSDK10_DIR)\inc;$(KINECT_TOOLKIT_DIR)inc;..\PCLRegistration</IncludePath>
-    <LibraryPath>E:\usr\lib\opencv2\x86\vc12\lib;E:\usr\lib;$(LibraryPath);$(SolutionDir)$(Configuration);$(KINECTSDK10_DIR)\lib\x86;$(KINECT_TOOLKIT_DIR)lib\x86</LibraryPath>
+    <IncludePath>$(PCL_ROOT)\3rdParty\FLANN\include;$(PCL_ROOT)\include\pcl-1.6;$(PCL_ROOT)\3rdParty\Boost\include;$(IncludePath);$(KINECTSDK10_DIR)\inc;$(KINECT_TOOLKIT_DIR)inc</IncludePath>
+    <LibraryPath>$(PCL_ROOT)\3rdParty\FLANN\lib;$(PCL_ROOT)\3rdParty\Boost\lib;E:\usr\lib;$(LibraryPath);$(PCL_ROOT)\lib;$(KINECTSDK10_DIR)\lib\x86;$(KINECT_TOOLKIT_DIR)lib\x86</LibraryPath>
+    <ExecutablePath>$(PCL_ROOT)\bin;E:\usr\dll;$(ExecutablePath)</ExecutablePath>
+    <LibraryWPath>$(LibraryWPath)</LibraryWPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions);_VARIADIC_MAX</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opencv_core$(OPENCV_VER)d.lib;opencv_imgproc$(OPENCV_VER)d.lib;opencv_highgui$(OPENCV_VER)d.lib;NuiSensorChooser.lib;Kinect10.lib;KinectFusion180_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>pcl_io_ply_$(Configuration).lib;pcl_io_$(Configuration).lib;pcl_registration_$(Configuration).lib;pcl_kdtree_$(Configuration).lib;pcl_apps_$(Configuration).lib;pcl_common_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions);_VARIADIC_MAX</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>opencv_core$(OPENCV_VER).lib;opencv_imgproc$(OPENCV_VER).lib;opencv_highgui$(OPENCV_VER).lib;NuiSensorChooser.lib;Kinect10.lib;KinectFusion180_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>pcl_io_ply_$(Configuration).lib;pcl_io_$(Configuration).lib;pcl_registration_$(Configuration).lib;pcl_kdtree_$(Configuration).lib;pcl_apps_$(Configuration).lib;pcl_common_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
+    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLRegistration\KinectDepth2PointCloudBuilder.h" />
+    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLRegistration\PointCloudRegistrator.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\Depth2PointCloud\Depth2Vertex.h" />
-    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\Depth2PointCloud\mesh.h" />
-    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\Depth2PointCloud\plylib.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\Depth2PointCloud\Depth2Vertex.cpp" />
-    <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\Depth2PointCloud\plylib.cpp" />
-    <ClCompile Include="Depth2PointCloud.cpp" />
+    <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLRegistration\KinectDepth2PointCloudBuilder.cpp" />
+    <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLRegistration\main.cpp" />
+    <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLRegistration\PointCloudRegistrator.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

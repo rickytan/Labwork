@@ -67,5 +67,5 @@ class Face: public vcg::Face<
 class Mesh: public vcg::tri::TriMesh<std::vector<Vertex>, std::vector<Face>> {
 };
 
-
+#undef static_assert
 #endif
