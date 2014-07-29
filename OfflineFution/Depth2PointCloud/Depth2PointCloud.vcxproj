@@ -19,13 +19,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v100</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v100</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -42,12 +42,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>..\NuiSensorChooser;$(PCL_ROOT)\3rdParty\FLANN\include;$(PCL_ROOT)\include\pcl-1.6;$(PCL_ROOT)\3rdParty\Boost\include;$(VCGlib);$(IncludePath);$(KINECTSDK10_DIR)\inc;$(KINECT_TOOLKIT_DIR)inc;..\PCLRegistration</IncludePath>
-    <LibraryPath>E:\usr\lib\opencv2\x86\vc12\lib;E:\usr\lib;$(LibraryPath);$(SolutionDir)$(Configuration);$(KINECTSDK10_DIR)\lib\x86;$(KINECT_TOOLKIT_DIR)lib\x86</LibraryPath>
+    <LibraryPath>$(PCL_ROOT)\lib;E:\usr\lib\opencv2\x86\vc12\lib;E:\usr\lib;$(LibraryPath);$(SolutionDir)$(Configuration);$(KINECTSDK10_DIR)\lib\x86;$(KINECT_TOOLKIT_DIR)lib\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>..\NuiSensorChooser;$(PCL_ROOT)\3rdParty\FLANN\include;$(PCL_ROOT)\include\pcl-1.6;$(PCL_ROOT)\3rdParty\Boost\include;$(VCGlib);$(IncludePath);$(KINECTSDK10_DIR)\inc;$(KINECT_TOOLKIT_DIR)inc;..\PCLRegistration</IncludePath>
-    <LibraryPath>E:\usr\lib\opencv2\x86\vc12\lib;E:\usr\lib;$(LibraryPath);$(SolutionDir)$(Configuration);$(KINECTSDK10_DIR)\lib\x86;$(KINECT_TOOLKIT_DIR)lib\x86</LibraryPath>
+    <LibraryPath>$(PCL_ROOT)\lib;E:\usr\lib\opencv2\x86\vc12\lib;E:\usr\lib;$(LibraryPath);$(SolutionDir)$(Configuration);$(KINECTSDK10_DIR)\lib\x86;$(KINECT_TOOLKIT_DIR)lib\x86</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -59,7 +59,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opencv_core$(OPENCV_VER)d.lib;opencv_imgproc$(OPENCV_VER)d.lib;opencv_highgui$(OPENCV_VER)d.lib;NuiSensorChooser.lib;Kinect10.lib;KinectFusion180_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core$(OPENCV_VER)d.lib;opencv_imgproc$(OPENCV_VER)d.lib;opencv_highgui$(OPENCV_VER)d.lib;NuiSensorChooser.lib;Kinect10.lib;KinectFusion180_32.lib;%(AdditionalDependencies);pcl_io_ply_$(Configuration).lib;pcl_io_$(Configuration).lib;pcl_registration_$(Configuration).lib;pcl_kdtree_$(Configuration).lib;pcl_apps_$(Configuration).lib;pcl_common_$(Configuration).lib;pcl_filters_$(Configuration).lib;PCLRegistration.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -76,7 +76,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>opencv_core$(OPENCV_VER).lib;opencv_imgproc$(OPENCV_VER).lib;opencv_highgui$(OPENCV_VER).lib;NuiSensorChooser.lib;Kinect10.lib;KinectFusion180_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core$(OPENCV_VER).lib;opencv_imgproc$(OPENCV_VER).lib;opencv_highgui$(OPENCV_VER).lib;NuiSensorChooser.lib;Kinect10.lib;KinectFusion180_32.lib;%(AdditionalDependencies);pcl_io_ply_$(Configuration).lib;pcl_io_$(Configuration).lib;pcl_registration_$(Configuration).lib;pcl_kdtree_$(Configuration).lib;pcl_apps_$(Configuration).lib;pcl_common_$(Configuration).lib;pcl_filters_$(Configuration).lib;PCLRegistration.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

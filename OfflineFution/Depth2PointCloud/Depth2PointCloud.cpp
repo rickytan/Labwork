@@ -17,6 +17,7 @@
 
 #include "mesh.h"
 
+#include "KinectDepth2PointCloudBuilder.h"
 #include "PointCloudRegistrator.h"
 
 using namespace std;
@@ -291,6 +292,12 @@ public:
                 SetNearMode(FALSE);
                 cout << "Disable Near mode!" << endl;
             }
+            if (keycode == 'a' ||
+                keycode == 'A') {
+                DWORD depthHeight, depthWidth;
+                NuiImageResolutionToSize(m_imageResolution, depthWidth, depthHeight);
+                registrator.addPointCloud(KinectDepth2PointCloudBuilder(reinterpret_cast<USHORT *>(m_pDepthBuffer), depthWidth, depthHeight));
+            }
             WaitForSingleObject(m_hDepthImageMutex, INFINITE);
             cv::imshow("Depth", m_depthImage);
             if (keycode == 's' ||
@@ -305,6 +312,8 @@ public:
 protected:
     cv::Mat m_depthImage;
     float m_pixelToMeterScale;
+
+    PointCloudRegistrator registrator;
 
     BOOL m_bNearMode;
 
@@ -334,6 +343,15 @@ protected:
 
 int main(int argc, char* argv[])
 {
+    /*
+    PointCloudRegistrator reg;
+    reg.addPointCloudFromPLY("point_cloud0.ply");
+    reg.addPointCloudFromPLY("point_cloud1.ply");
+    PointCloudRegistrator::PointCloud out;
+    reg.getResultCloud(out);
+    pcl::io::savePLYFileBinary("point_aligned.ply", out);
+    return 0;
+    */
     OpenCVApp app;
     if (app.InitializeSensor())
         app.Run();

@@ -11,7 +11,7 @@
 #include <math.h>
 #include <vector>
 #include <stdio.h>
-#include <string.h>
+#include <string>
 
 #pragma warning(push)
 #pragma warning(disable:6255)

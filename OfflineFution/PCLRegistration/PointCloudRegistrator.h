@@ -27,14 +27,17 @@ public:
     typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
     typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudPtr;
 
-    PointCloudRegistrator();
-    ~PointCloudRegistrator();
+    PointCloudRegistrator() {}
+    ~PointCloudRegistrator() {}
 
     void addPointCloud(const PointCloudPtr cloud, const Eigen::Matrix4f &transform = Eigen::Matrix4f::Identity());
+    void addPointCloud(const PointCloud &cloud, const Eigen::Matrix4f &transform = Eigen::Matrix4f::Identity());
     void addPointCloudFromPLY(const string &filename);
     void getResultCloud(PointCloud &cloud);
 
 private:
+    PointCloudPtr downSamplePointCloud(const PointCloud &cloud, size_t size = 5000);
+
     PointCloudPtr m_pointCloud;
 };
 

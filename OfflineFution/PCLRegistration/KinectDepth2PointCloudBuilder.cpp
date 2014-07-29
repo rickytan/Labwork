@@ -30,6 +30,7 @@ KinectDepth2PointCloudBuilder::KinectDepth2PointCloudBuilder(const NUI_DEPTH_IMA
 }
 
 KinectDepth2PointCloudBuilder::KinectDepth2PointCloudBuilder(const USHORT *depthBuffer, UINT width, UINT height)
+: m_pointCloud(new PointCloudRegistrator::PointCloud)
 {
     int imageWidth = width;
     int imageHeight = height;
@@ -37,11 +38,12 @@ KinectDepth2PointCloudBuilder::KinectDepth2PointCloudBuilder(const USHORT *depth
     int imageHalfHeight = imageHeight / 2;
     float pixelToMeterScale = tanf(NUI_CAMERA_DEPTH_NOMINAL_HORIZONTAL_FOV * M_PI / 180.f * 0.5f) / (width * .5f);
 
-    m_pointCloud->width = width * height;
+    size_t size = width * height;
+    m_pointCloud->width = size;
     m_pointCloud->height = 1;
     m_pointCloud->is_dense = true;
     m_pointCloud->points.reserve(width * height);
-    for (size_t i = 0; i < m_pointCloud->points.size(); ++i)
+    for (size_t i = 0; i < size; ++i)
     {
         int w = i % width;
         int h = i / height;
