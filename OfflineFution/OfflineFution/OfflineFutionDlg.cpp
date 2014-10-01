@@ -264,7 +264,7 @@ void COfflineFutionDlg::InitializeUIControls()
     m_SliderMin.SetRange(350, 8000, TRUE);
     m_SliderMin.SetPos(350);
     m_SliderMax.SetRange(350, 8000, TRUE);
-    m_SliderMax.SetPos(3000);
+    m_SliderMax.SetPos(8000);
 }
 void COfflineFutionDlg::SetStatusMessage(LPCTSTR szText)
 {
@@ -318,7 +318,8 @@ void COfflineFutionDlg::OnFrameReady()
             SetStatusMessage(ws.c_str());
             if (frameCounter++ > FRAME_SKIP_COUNT) {
                 NUI_FUSION_IMAGE_FRAME * depthFloat = m_processor.GetDepthFloatImage();
-                PCloud cloud = Helper::depthFloatToPointCloud(depthFloat);
+                PCloud cloud;
+                Helper::depthFloatToPointCloud(depthFloat, cloud);
                 Helper::saveSequenceTo("./data", cloud, mat);
                 frameCounter = 0;
             }

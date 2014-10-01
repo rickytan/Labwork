@@ -13,7 +13,7 @@
 #include <pcl/point_types.h>
 
 
-typedef pcl::PointCloud<pcl::PointXYZ> PCloud;
+typedef pcl::PointCloud<pcl::PointXYZINormal> PCloud;
 typedef PCloud::Ptr PCloudPtr;
 typedef PCloud::ConstPtr PCloudConstPtr;
 
@@ -23,7 +23,7 @@ namespace Helper
     Matrix4 convertFromEigenMatrix(const Eigen::Matrix4f &M);
 
 
-    PCloud depthFloatToPointCloud(NUI_FUSION_IMAGE_FRAME * pDepthFloatImage);
+    void depthFloatToPointCloud(NUI_FUSION_IMAGE_FRAME * pDepthFloatImage, PCloud &cloud);
 
     void savePointCloudTo(const std::string &path, PCloud &cloud, const Eigen::Matrix4f &transform = Eigen::Matrix4f::Identity());
     void saveSequenceTo(const std::string &dir, PCloud &cloud, const Eigen::Matrix4f &transform = Eigen::Matrix4f::Identity());
