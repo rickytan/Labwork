@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2010
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OfflineFution", "OfflineFution\OfflineFution.vcxproj", "{2EE1F65D-46E6-4DA4-8560-77EB2918DE4B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NuiSensorChooser", "NuiSensorChooser\NuiSensorChooser.vcxproj", "{67A64301-C979-4FDE-BF65-4B0BFD05700D}"
@@ -14,6 +16,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PCLRegistration", "PCLRegistration\PCLRegistration.vcxproj", "{C320F6F9-A39F-4CFB-83F7-CC16661C2111}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PCLTransformViewer", "PCLTransformViewer\PCLTransformViewer.vcxproj", "{EFA3F0FD-2B79-48D2-90A8-7CA7B389BE71}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PCLKinFu", "PCLKinFu\PCLKinFu.vcxproj", "{1FC85111-21F3-4DBD-AEFA-DFF497EAE525}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,6 +59,12 @@ Global
 		{EFA3F0FD-2B79-48D2-90A8-7CA7B389BE71}.Release|Win32.ActiveCfg = Release|Win32
 		{EFA3F0FD-2B79-48D2-90A8-7CA7B389BE71}.Release|Win32.Build.0 = Release|Win32
 		{EFA3F0FD-2B79-48D2-90A8-7CA7B389BE71}.Release|x64.ActiveCfg = Release|Win32
+		{1FC85111-21F3-4DBD-AEFA-DFF497EAE525}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1FC85111-21F3-4DBD-AEFA-DFF497EAE525}.Debug|Win32.Build.0 = Debug|Win32
+		{1FC85111-21F3-4DBD-AEFA-DFF497EAE525}.Debug|x64.ActiveCfg = Debug|Win32
+		{1FC85111-21F3-4DBD-AEFA-DFF497EAE525}.Release|Win32.ActiveCfg = Release|Win32
+		{1FC85111-21F3-4DBD-AEFA-DFF497EAE525}.Release|Win32.Build.0 = Release|Win32
+		{1FC85111-21F3-4DBD-AEFA-DFF497EAE525}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -37,7 +37,6 @@ public:
 
 private:
     PointCloudPtr downSamplePointCloud(const PointCloud &cloud, size_t size = 5000);
-
     PointCloudPtr m_pointCloud;
 };
 

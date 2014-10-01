@@ -40,7 +40,7 @@ public:
         , m_pCameraPoseFinder(nullptr)
         , m_bNearMode(FALSE)
     {
-        
+        MatrixSetIdentity(m_worldToCameraTransform);
     }
     ~OpenCVApp() {
         UnInitialize();
@@ -73,6 +73,12 @@ public:
         m_hProcessStopEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
         return true;
+    }
+
+    void MatrixSetIdentity(Matrix4 &mat)
+    {
+        ZeroMemory(&mat, sizeof(mat));
+        mat.M11 = mat.M22 = mat.M33 = mat.M44 = 1.f;
     }
 
     void UnInitialize() {

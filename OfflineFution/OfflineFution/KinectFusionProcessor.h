@@ -103,6 +103,9 @@ public:
     /// Is the camera pose finder initialized and running.
     /// </summary>
     bool                        IsCameraPoseFinderAvailable();
+    bool                        IsTrackingFailed() { return m_bTrackingFailed; }
+    Matrix4                     GetWorldToCameraTransform() { return m_worldToCameraTransform; }
+    NUI_FUSION_IMAGE_FRAME *    GetDepthFloatImage() { return m_pDepthFloatImage; }
 
 private:
     KinectFusionParams          m_paramsNext;

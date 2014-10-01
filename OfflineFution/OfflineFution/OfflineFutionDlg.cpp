@@ -6,6 +6,10 @@
 #include "OfflineFution.h"
 #include "OfflineFutionDlg.h"
 #include "afxdialogex.h"
+#include "Helper.h"
+
+#include <iostream>
+#include <ostream>
 
 #include <NuiApi.h>
 #include <NuiKinectFusionApi.h>
@@ -75,11 +79,14 @@ COfflineFutionDlg::COfflineFutionDlg(CWnd* pParent /*=NULL*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
     m_pDepthViewRenderer = new ImageRenderer();
+    m_pDrawTrackingResiduals = new ImageRenderer();
 }
 
 COfflineFutionDlg::~COfflineFutionDlg()
 {
     SAFE_DELETE(m_pSensorChooserUI);
+    SAFE_DELETE(m_pDepthViewRenderer);
+    SAFE_DELETE(m_pDrawTrackingResiduals);
 }
 
 void COfflineFutionDlg::DoDataExchange(CDataExchange* pDX)
@@ -104,7 +111,9 @@ END_MESSAGE_MAP()
 BOOL COfflineFutionDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-    
+
+    SetStatusMessage(L"Initializing...");
+
 	// 将“关于...”菜单项添加到系统菜单中。
 
 	// IDM_ABOUTBOX 必须在系统命令范围内。
@@ -143,9 +152,19 @@ BOOL COfflineFutionDlg::OnInitDialog()
         width,
         height, 
         width * sizeof(ULONG));
-    SetStatusMessage(L"fefe");
     if (FAILED(hr)) {
-        SetStatusMessage(L"Failed to initialize the Direct2D draw device.");
+        SetStatusMessage(L"Failed to initialize the depth View.");
+        m_bInitializeError = TRUE;
+    }
+
+    hr = m_pDrawTrackingResiduals->Initialize(GetDlgItem(IDC_TRACKING_VIEW)->m_hWnd,
+        m_pD2D1Factory,
+        width,
+        height,
+        width * sizeof(ULONG));
+
+    if (FAILED(hr)) {
+        SetStatusMessage(L"Failed to initialize the tracking View.");
         m_bInitializeError = TRUE;
     }
 
@@ -245,7 +264,7 @@ void COfflineFutionDlg::InitializeUIControls()
     m_SliderMin.SetRange(350, 8000, TRUE);
     m_SliderMin.SetPos(350);
     m_SliderMax.SetRange(350, 8000, TRUE);
-    m_SliderMax.SetPos(8000);
+    m_SliderMax.SetPos(3000);
 }
 void COfflineFutionDlg::SetStatusMessage(LPCTSTR szText)
 {
@@ -281,12 +300,33 @@ void COfflineFutionDlg::OnFrameReady()
     MSG msg;
     while (PeekMessage(&msg, m_hWnd, WM_FRAMEREADY, WM_FRAMEREADY, PM_REMOVE)) {}
 
+    const int FRAME_SKIP_COUNT = 30;
+    static int frameCounter = FRAME_SKIP_COUNT;
+
     m_processor.LockFrame(&pFrame);
     if (m_processor.IsVolumeInitialized())
     {
+        if (m_processor.IsCameraPoseFinderAvailable()) {
+            Matrix4 trans = m_processor.GetWorldToCameraTransform();
+            Eigen::Matrix4f mat = Helper::convertToEigenMatrix(trans);
+            //mat(3, 2) = -mat(3, 2);
+            std::stringstream ss;
+            ss << mat.block<3, 1>(0, 3).transpose() << std::endl;
+            std::string s = ss.str();
+            std::wstring ws;
+            ws.assign(s.begin(), s.end());
+            SetStatusMessage(ws.c_str());
+            if (frameCounter++ > FRAME_SKIP_COUNT) {
+                NUI_FUSION_IMAGE_FRAME * depthFloat = m_processor.GetDepthFloatImage();
+                PCloud cloud = Helper::depthFloatToPointCloud(depthFloat);
+                Helper::saveSequenceTo("./data", cloud, mat);
+                frameCounter = 0;
+            }
+        }
         m_pDepthViewRenderer->Draw(pFrame->m_pDepthRGBX, pFrame->m_cbImageSize);
         //m_pDrawReconstruction->Draw(pFrame->m_pReconstructionRGBX, pFrame->m_cbImageSize);
-        //m_pDrawTrackingResiduals->Draw(pFrame->m_pTrackingDataRGBX, pFrame->m_cbImageSize);
+        m_pDrawTrackingResiduals->Draw(pFrame->m_pTrackingDataRGBX, pFrame->m_cbImageSize);
+        //SetStatusMessage(pFrame->m_statusMessage);
     }
     m_processor.UnlockFrame();
 }

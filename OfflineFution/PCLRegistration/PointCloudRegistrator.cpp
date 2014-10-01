@@ -9,7 +9,9 @@
 #include <pcl/registration/icp.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/filters/bilateral.h>
+#include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/impl/bilateral.hpp>
+#include <pcl/range_image/range_image.h>
 
 void PointCloudRegistrator::addPointCloud(const PointCloudPtr cloud, const Eigen::Matrix4f &transform)
 {
@@ -79,3 +81,4 @@ PointCloudRegistrator::PointCloudPtr PointCloudRegistrator::downSamplePointCloud
     }
     return out;
 }
+

@@ -59,11 +59,13 @@
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions);_AFXDLL</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(BOOST_INCLUDEDIR);$(PCL_ROOT)\include\pcl-1.6;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>NuiSensorChooser.lib;Kinect10.lib;KinectFusion180_32.lib;</AdditionalDependencies>
+      <AdditionalDependencies>NuiSensorChooser.lib;Kinect10.lib;KinectFusion180_32.lib;pcl_io_ply_$(Configuration).lib;pcl_io_$(Configuration).lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(PCL_ROOT)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -108,6 +110,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\OfflineFution\Helper.h" />
     <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\OfflineFution\ImageRenderer.h" />
     <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\OfflineFution\KinectFusionHelper.h" />
     <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\OfflineFution\KinectFusionParams.h" />
@@ -121,6 +124,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\OfflineFution\Helper.cpp" />
     <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\OfflineFution\ImageRenderer.cpp" />
     <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\OfflineFution\KinectFusionHelper.cpp" />
     <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\OfflineFution\KinectFusionProcessor.cpp" />

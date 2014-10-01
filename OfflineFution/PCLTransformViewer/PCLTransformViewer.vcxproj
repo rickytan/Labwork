@@ -40,12 +40,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>..\NuiSensorChooser;$(PCL_ROOT)\3rdParty\VTK\include\vtk-5.8;$(PCL_ROOT)\3rdParty\FLANN\include;$(PCL_ROOT)\include\pcl-1.6;$(PCL_ROOT)\3rdParty\Boost\include;$(VCGlib);$(IncludePath);$(KINECTSDK10_DIR)\inc;$(KINECT_TOOLKIT_DIR)inc;..\PCLRegistration</IncludePath>
-    <LibraryPath>$(PCL_ROOT)\3rdParty\VTK\lib\vtk-5.8;$(PCL_ROOT)\lib;E:\usr\lib;$(LibraryPath);$(SolutionDir)$(Configuration);$(KINECTSDK10_DIR)\lib\x86;$(KINECT_TOOLKIT_DIR)lib\x86</LibraryPath>
+    <LibraryPath>$(PCL_ROOT)\3rdParty\Boost\lib;$(PCL_ROOT)\3rdParty\VTK\lib\vtk-5.8;$(PCL_ROOT)\lib;E:\usr\lib;$(LibraryPath);$(SolutionDir)$(Configuration);$(KINECTSDK10_DIR)\lib\x86;$(KINECT_TOOLKIT_DIR)lib\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\NuiSensorChooser;$(PCL_ROOT)\3rdPary\VTK\include\vtk-5.8;$(PCL_ROOT)\3rdParty\FLANN\include;$(PCL_ROOT)\include\pcl-1.6;$(PCL_ROOT)\3rdParty\Boost\include;$(VCGlib);$(IncludePath);$(KINECTSDK10_DIR)\inc;$(KINECT_TOOLKIT_DIR)inc;..\PCLRegistration</IncludePath>
-    <LibraryPath>$(PCL_ROOT)\3rdParty\VTK\lib\vtk-5.8;$(PCL_ROOT)\lib;E:\usr\lib;$(LibraryPath);$(SolutionDir)$(Configuration);$(KINECTSDK10_DIR)\lib\x86;$(KINECT_TOOLKIT_DIR)lib\x86</LibraryPath>
+    <IncludePath>..\NuiSensorChooser;$(PCL_ROOT)\3rdParty\VTK\include\vtk-5.8;$(PCL_ROOT)\3rdParty\FLANN\include;$(PCL_ROOT)\include\pcl-1.6;$(PCL_ROOT)\3rdParty\Boost\include;$(VCGlib);$(IncludePath);$(KINECTSDK10_DIR)\inc;$(KINECT_TOOLKIT_DIR)inc;..\PCLRegistration</IncludePath>
+    <LibraryPath>$(PCL_ROOT)\3rdParty\Boost\lib;$(PCL_ROOT)\3rdParty\VTK\lib\vtk-5.8;$(PCL_ROOT)\lib;E:\usr\lib;$(LibraryPath);$(SolutionDir)$(Configuration);$(KINECTSDK10_DIR)\lib\x86;$(KINECT_TOOLKIT_DIR)lib\x86</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -58,7 +58,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>%(AdditionalDependencies);pcl_io_ply_$(Configuration).lib;pcl_io_$(Configuration).lib;pcl_registration_$(Configuration).lib;pcl_kdtree_$(Configuration).lib;pcl_apps_$(Configuration).lib;pcl_common_$(Configuration).lib;pcl_filters_$(Configuration).lib</AdditionalDependencies>
+      <AdditionalDependencies>vtkftgl-gd.lib;opengl32.lib;vtkalglib-gd.lib;vtkCharts-gd.lib;vtkverdict-gd.lib;vtkzlib-gd.lib;vtkRendering-gd.lib;vtkDICOMParser-gd.lib;vtkGenericFiltering-gd.lib;vtkViews-gd.lib;vtkIO-gd.lib;vtkImaging-gd.lib;vtkInfovis-gd.lib;vtkGeovis-gd.lib;vtkHybrid-gd.lib;vtkVolumeRendering-gd.lib;vtkproj4-gd.lib;vtkmetaio-gd.lib;vtktiff-gd.lib;vtkpng-gd.lib;vtkjpeg-gd.lib;vtkFiltering-gd.lib;vtklibxml2-gd.lib;vtkCommon-gd.lib;vtksys-gd.lib;vtkexpat-gd.lib;vtkexoIIc-gd.lib;vtkGraphics-gd.lib;vtkfreetype-gd.lib;%(AdditionalDependencies);pcl_io_ply_$(Configuration).lib;pcl_io_$(Configuration).lib;pcl_registration_$(Configuration).lib;pcl_kdtree_$(Configuration).lib;pcl_visualization_$(Configuration).lib;pcl_apps_$(Configuration).lib;pcl_common_$(Configuration).lib;pcl_filters_$(Configuration).lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -76,7 +76,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>%(AdditionalDependencies);pcl_io_ply_$(Configuration).lib;pcl_io_$(Configuration).lib;pcl_registration_$(Configuration).lib;pcl_kdtree_$(Configuration).lib;pcl_apps_$(Configuration).lib;pcl_common_$(Configuration).lib;pcl_filters_$(Configuration).lib</AdditionalDependencies>
+      <AdditionalDependencies>vtkftgl.lib;opengl32.lib;vtkalglib.lib;vtkCharts.lib;vtkverdict.lib;vtkzlib.lib;vtkRendering.lib;vtkDICOMParser.lib;vtkGenericFiltering.lib;vtkViews.lib;vtkIO.lib;vtkImaging.lib;vtkInfovis.lib;vtkGeovis.lib;vtkHybrid.lib;vtkVolumeRendering.lib;vtkproj4.lib;vtkmetaio.lib;vtktiff.lib;vtkpng.lib;vtkjpeg.lib;vtkFiltering.lib;vtklibxml2.lib;vtkCommon.lib;vtksys.lib;vtkexpat.lib;vtkexoIIc.lib;vtkGraphics.lib;vtkfreetype-gd.lib;%(AdditionalDependencies);pcl_io_ply_$(Configuration).lib;pcl_io_$(Configuration).lib;pcl_registration_$(Configuration).lib;pcl_kdtree_$(Configuration).lib;pcl_visualization_$(Configuration).lib;pcl_apps_$(Configuration).lib;pcl_common_$(Configuration).lib;pcl_filters_$(Configuration).lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

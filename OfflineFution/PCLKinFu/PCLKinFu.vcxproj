@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{1FC85111-21F3-4DBD-AEFA-DFF497EAE525}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>PCLKinFu</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(BOOST_INCLUDEDIR);$(PCL_ROOT)\include\pcl-1.6;$(ProjectDir)containers\include;$(ProjectDir)kinfu\include;$(CUDA_PATH)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(BOOST_LIBRARYDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\cuda\bilateral_pyrdown.cu" />
+    <None Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\cuda\colors.cu" />
+    <None Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\cuda\coresp.cu" />
+    <None Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\cuda\estimate_combined.cu" />
+    <None Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\cuda\estimate_tranform.cu" />
+    <None Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\cuda\extract.cu" />
+    <None Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\cuda\image_generator.cu" />
+    <None Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\cuda\maps.cu" />
+    <None Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\cuda\marching_cubes.cu" />
+    <None Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\cuda\normals_eigen.cu" />
+    <None Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\cuda\ray_caster.cu" />
+    <None Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\cuda\tsdf_volume.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\include\pcl\gpu\kinfu\color_volume.h" />
+    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\include\pcl\gpu\kinfu\kinfu.h" />
+    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\include\pcl\gpu\kinfu\marching_cubes.h" />
+    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\include\pcl\gpu\kinfu\pixel_rgb.h" />
+    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\include\pcl\gpu\kinfu\raycaster.h" />
+    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\include\pcl\gpu\kinfu\tsdf_volume.h" />
+    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\cuda\device.hpp" />
+    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\cuda\utils.hpp" />
+    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\internal.h" />
+    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\safe_call.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\color_volume.cpp" />
+    <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\kinfu.cpp" />
+    <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\marching_cubes.cpp" />
+    <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\raycaster.cpp" />
+    <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\OfflineFution\PCLKinFu\kinfu\src\tsdf_volume.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

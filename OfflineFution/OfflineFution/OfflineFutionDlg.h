@@ -9,6 +9,7 @@
 #include "KinectFusionParams.h"
 #include "KinectFusionProcessor.h"
 
+
 // COfflineFutionDlg ¶Ô»°¿ò
 class COfflineFutionDlg : public CDialogEx
 {
@@ -49,10 +50,12 @@ private:
     CStatusBar m_StatusBar;
 
     NuiSensorChooserUI * m_pSensorChooserUI;
+    INuiFusionCameraPoseFinder * m_pCameraPostFinder;
     KinectFusionProcessor m_processor;
     KinectFusionParams m_params;
     ID2D1Factory * m_pD2D1Factory;
     ImageRenderer * m_pDepthViewRenderer;
+    ImageRenderer * m_pDrawTrackingResiduals;
     DWORD m_tickLastStatus;
     DWORD m_fFramesPerSecond;
     BOOL m_bInitializeError;
