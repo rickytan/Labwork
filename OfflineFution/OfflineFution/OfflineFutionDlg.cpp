@@ -309,7 +309,7 @@ void COfflineFutionDlg::OnFrameReady()
         if (m_processor.IsCameraPoseFinderAvailable()) {
             Matrix4 trans = m_processor.GetWorldToCameraTransform();
             Eigen::Matrix4f mat = Helper::convertToEigenMatrix(trans);
-            //mat(3, 2) = -mat(3, 2);
+            //mat(2, 3) = -mat(2, 3);
             std::stringstream ss;
             ss << mat.block<3, 1>(0, 3).transpose() << std::endl;
             std::string s = ss.str();

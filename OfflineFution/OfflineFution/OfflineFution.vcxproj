@@ -59,13 +59,13 @@
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions);_AFXDLL</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(BOOST_INCLUDEDIR);$(PCL_ROOT)\include\pcl-1.6;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(FLANN_INCLUDE_DIR);$(BOOST_INCLUDEDIR);$(PCL_ROOT)\include\pcl-1.6;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>NuiSensorChooser.lib;Kinect10.lib;KinectFusion180_32.lib;pcl_io_ply_$(Configuration).lib;pcl_io_$(Configuration).lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(PCL_ROOT)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>NuiSensorChooser.lib;Kinect10.lib;KinectFusion180_32.lib;pcl_io_ply_$(Configuration).lib;pcl_io_$(Configuration).lib;pcl_features_$(Configuration).lib;pcl_common_$(Configuration).lib;pcl_kdtree_$(Configuration).lib;pcl_search_$(Configuration).lib;flann.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(PCL_ROOT)\lib;$(PCL_ROOT)\3rdParty\FLANN\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -82,18 +82,25 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(FLANN_INCLUDE_DIR);$(BOOST_INCLUDEDIR);$(PCL_ROOT)\include\pcl-1.6;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(PCL_ROOT)\lib;$(PCL_ROOT)\3rdParty\FLANN\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>NuiSensorChooser.lib;Kinect10.lib;KinectFusion180_32.lib;pcl_io_ply_$(Configuration).lib;pcl_io_$(Configuration).lib;pcl_features_$(Configuration).lib;pcl_common_$(Configuration).lib;pcl_kdtree_$(Configuration).lib;pcl_search_$(Configuration).lib;flann.lib</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>
+      </IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>

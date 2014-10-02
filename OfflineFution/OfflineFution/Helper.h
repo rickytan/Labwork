@@ -9,11 +9,20 @@
 
 #include <limits>
 
+
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
+
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
 
-typedef pcl::PointCloud<pcl::PointXYZINormal> PCloud;
+typedef pcl::PointCloud<pcl::PointXYZ> PCloud;
 typedef PCloud::Ptr PCloudPtr;
 typedef PCloud::ConstPtr PCloudConstPtr;
 

@@ -4,15 +4,32 @@
 #include "Helper.h"
 
 #include <iostream>
+#include <limits>
+#include <cmath>
 
 #include <ppl.h>
 
-#ifdef max
-#undef max
-#endif
+#include <boost/math/special_functions.hpp>
 
 #include <pcl/common/transforms.h>
 #include <pcl/io/ply_io.h>
+#include <pcl/features/normal_3d.h>
+
+using namespace boost::math;
+
+namespace Helper {
+    void computePointNormal(PCloud& cloud)
+    {
+        /*
+        pcl::NormalEstimation<pcl::PointXYZINormal, pcl::PointXYZINormal> ne;
+        ne.setInputCloud(cloud.makeShared());
+        pcl::search::KdTree<pcl::PointXYZINormal>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZINormal>());
+        ne.setSearchMethod(tree);
+        ne.setRadiusSearch(0.03);
+        ne.compute(cloud);
+        */
+    }
+};
 
 Eigen::Matrix4f Helper::convertToEigenMatrix(const Matrix4 &mat)
 {
@@ -42,16 +59,16 @@ void Helper::depthFloatToPointCloud(::NUI_FUSION_IMAGE_FRAME * pDepthFloatImage,
 
         assert(NUI_FUSION_IMAGE_TYPE_FLOAT == pDepthFloatImage->imageType);
 
-        outCloud.width = pDepthFloatImage->width;
-        outCloud.height = pDepthFloatImage->height;
-        outCloud.is_dense = false;
-        outCloud.points.resize(outCloud.width * outCloud.height);
+        outCloud.width = pDepthFloatImage->width * pDepthFloatImage->height;
+        outCloud.height = 1;
+        outCloud.is_dense = true;
+        outCloud.points.reserve(outCloud.width * outCloud.height);
 
         const float *pFloatBuffer = reinterpret_cast<float *>(LockedRect.pBits);
-        const float cx = pDepthFloatImage->pCameraParameters->principalPointX;
-        const float cy = pDepthFloatImage->pCameraParameters->principalPointY;
-        const float fx = pDepthFloatImage->pCameraParameters->focalLengthX;
-        const float fy = pDepthFloatImage->pCameraParameters->focalLengthY;
+        const float cx = 319.5f;// pDepthFloatImage->pCameraParameters->principalPointX;
+        const float cy = 239.5f;// pDepthFloatImage->pCameraParameters->principalPointY;
+        const float fx = 1.0 / 571.4;// pDepthFloatImage->pCameraParameters->focalLengthX;
+        const float fy = 1.0 / 571.4;// pDepthFloatImage->pCameraParameters->focalLengthY;
 
         //Concurrency::parallel_for(0u, pDepthFloatImage->height, [&](unsigned int y)
         for (unsigned int y = 0; y < pDepthFloatImage->height; ++y)
@@ -65,17 +82,11 @@ void Helper::depthFloatToPointCloud(::NUI_FUSION_IMAGE_FRAME * pDepthFloatImage,
                 if (depth < 1e-6 || depth > 10.) {
                     continue;
                 }
-                float vx = ((1.f * x / pDepthFloatImage->width) - cx) * fx * depth;
-                float vy = ((1.f * y / pDepthFloatImage->height) - cy) * fy * depth;
+                float vx = (1.f * x - cx) * fx * depth;
+                float vy = (1.f * y - cy) * fy * depth;
                 float vz = depth;
-                pcl::PointXYZINormal p;
-                p.getVector3fMap() = Eigen::Vector3f(vx, -vy, -vz);
-                if (x != pDepthFloatImage->width - 1 && y != pDepthFloatImage->height - 1)
-                {
 
-                }
-                //p.getNormalVector3fMap() = 
-                outCloud.at(x, y) = p;
+                outCloud.push_back(PCloud::PointType(vx, vy, vz));
             }
         }
         //);
@@ -88,9 +99,9 @@ void Helper::depthFloatToPointCloud(::NUI_FUSION_IMAGE_FRAME * pDepthFloatImage,
 void Helper::savePointCloudTo(const std::string &path, PCloud &cloud, const Eigen::Matrix4f &transform)
 {
     Eigen::Affine3f affine(transform);
-    affine.translation() = -affine.translation();
+    //affine.translation() = -affine.translation();
     //pcl::transformPointCloud(cloud, cloud, affine);
-
+    affine = affine.inverse();
     Concurrency::parallel_for(0u, cloud.points.size(), [&](unsigned int i) {
     //    for (size_t i = 0; i < cloud.points.size(); ++i)
             cloud.points[i].getVector3fMap() = affine * cloud.points[i].getVector3fMap();
