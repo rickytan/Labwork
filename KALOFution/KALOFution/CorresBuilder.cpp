@@ -1,10 +1,11 @@
 #include "CorresBuilder.h"
 
-CorresBuilder::CorresBuilder<class PointType>()
+template <typename PointType>
+CorresBuilder<PointType>::CorresBuilder()
 {
 }
 
 template <class PointType>
-CorresBuilder::~CorresBuilder()
+CorresBuilder<PointType>::~CorresBuilder()
 {
 }

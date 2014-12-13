@@ -12,9 +12,11 @@
 template <typename PointType>
 class CorresBuilder
 {
+    typedef typename PointType::ScalarType ScalarType;
     typedef pcl::PointCloud<PointType> CloudType;
     typedef std::pair<int, int> CloudPair;
     typedef std::pair<int, int> PointPair;
+    typedef Eigen::Transform<ScalarType, 3, Eigen::Affine> CloudTransform;
 
 public:
     CorresBuilder();
@@ -22,7 +24,7 @@ public:
 
 private:
     std::vector<CloudType> m_pointClouds;
-    
+    std::vector<CloudTransform, Eigen::aligned_allocator<CloudTransform> > m_initCloudTransform;
 };
 
 #endif  // _CORRESBUILDER_H_
