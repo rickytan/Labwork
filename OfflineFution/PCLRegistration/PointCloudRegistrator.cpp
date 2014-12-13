@@ -20,17 +20,12 @@ void PointCloudRegistrator::addPointCloud(const PointCloudPtr cloud, const Eigen
 
 void PointCloudRegistrator::addPointCloud( const PointCloud &cloud, const Eigen::Matrix4f &transform /*= Eigen::Matrix4f::Identity()*/ )
 {
-    PointCloudPtr downSampledCloud = downSamplePointCloud(cloud);
-    /*
     PointCloud filteredCloud;
-    pcl::search::Search<pcl::PointXYZI>::Ptr tree (new pcl::KdTreeFLANN<PointXYZI>);
-    pcl::BilateralFilter<PointXYZ> filter;
-    filter.setSearchMethod(tree);
-    filter.setInputCloud(downSampledCloud);
-    filter.setHalfSize(10.);
-    filter.setStdDev(10.);
+    pcl::VoxelGrid<PointXYZ> filter;
+    filter.setLeafSize(0.03, 0.03, 0.03);
+    filter.setInputCloud(cloud.makeShared());
     filter.filter(filteredCloud);
-    */
+    PointCloudPtr downSampledCloud = downSamplePointCloud(filteredCloud);    
 
     if (m_pointCloud == NULL) {
         m_pointCloud = downSampledCloud;
@@ -74,7 +69,7 @@ PointCloudRegistrator::PointCloudPtr PointCloudRegistrator::downSamplePointCloud
     out->points.resize(size);
     
     std::mt19937 eng((std::random_device())());
-    std::uniform_int_distribution<> dist(0, cloud.points.size());
+    std::uniform_int_distribution<> dist(0, cloud.points.size()-1);
     for (size_t i=0; i<size; ++i)
     {
         out->points[i] = cloud.points[dist(eng)];

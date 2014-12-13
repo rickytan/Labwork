@@ -56,6 +56,7 @@ private:
     ID2D1Factory * m_pD2D1Factory;
     ImageRenderer * m_pDepthViewRenderer;
     ImageRenderer * m_pDrawTrackingResiduals;
+    ImageRenderer * m_pReconstructionViewRenderer;
     DWORD m_tickLastStatus;
     DWORD m_fFramesPerSecond;
     BOOL m_bInitializeError;

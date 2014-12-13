@@ -1,6 +1,7 @@
 #ifndef OFFLINEFUTION_HELPER_H_
 #define OFFLINEFUTION_HELPER_H_
 
+#include "stdafx.h"
 #include "Helper.h"
 
 #include <iostream>

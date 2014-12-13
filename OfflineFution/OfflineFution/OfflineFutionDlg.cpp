@@ -80,6 +80,10 @@ COfflineFutionDlg::COfflineFutionDlg(CWnd* pParent /*=NULL*/)
 
     m_pDepthViewRenderer = new ImageRenderer();
     m_pDrawTrackingResiduals = new ImageRenderer();
+    m_pReconstructionViewRenderer = new ImageRenderer();
+
+    m_params.m_reconstructionParams.voxelsPerMeter = 128;
+    m_params.m_reconstructionParams.voxelCountX = m_params.m_reconstructionParams.voxelCountY = m_params.m_reconstructionParams.voxelCountZ = 512;
 }
 
 COfflineFutionDlg::~COfflineFutionDlg()
@@ -87,6 +91,7 @@ COfflineFutionDlg::~COfflineFutionDlg()
     SAFE_DELETE(m_pSensorChooserUI);
     SAFE_DELETE(m_pDepthViewRenderer);
     SAFE_DELETE(m_pDrawTrackingResiduals);
+    SAFE_DELETE(m_pReconstructionViewRenderer);
 }
 
 void COfflineFutionDlg::DoDataExchange(CDataExchange* pDX)
@@ -168,11 +173,21 @@ BOOL COfflineFutionDlg::OnInitDialog()
         m_bInitializeError = TRUE;
     }
 
+    hr = m_pReconstructionViewRenderer->Initialize(GetDlgItem(IDC_DEPTH_VIEW)->m_hWnd,
+        m_pD2D1Factory,
+        width, height,
+        width * sizeof(ULONG));
+
+    if (FAILED(hr)) {
+        SetStatusMessage(L"Failed to initialize the reconstruction View.");
+        m_bInitializeError = TRUE;
+    }
+
     if (FAILED(m_processor.SetWindow(m_hWnd, WM_FRAMEREADY, WM_UPDATE_SENSOR_STATUS, WM_UPDATE_NEAR_MODE)) ||
         FAILED(m_processor.SetParams(m_params)) ||
         FAILED(m_processor.StartProcessing()))
     {
-        m_bInitializeError = true;
+        m_bInitializeError = TRUE;
     }
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -325,7 +340,7 @@ void COfflineFutionDlg::OnFrameReady()
             }
         }
         m_pDepthViewRenderer->Draw(pFrame->m_pDepthRGBX, pFrame->m_cbImageSize);
-        //m_pDrawReconstruction->Draw(pFrame->m_pReconstructionRGBX, pFrame->m_cbImageSize);
+        m_pReconstructionViewRenderer->Draw(pFrame->m_pReconstructionRGBX, pFrame->m_cbImageSize);
         m_pDrawTrackingResiduals->Draw(pFrame->m_pTrackingDataRGBX, pFrame->m_cbImageSize);
         //SetStatusMessage(pFrame->m_statusMessage);
     }
