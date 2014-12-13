@@ -21,12 +21,18 @@
     <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\KALOFution\KALOFution\CorresBuilder.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\ricky%27s work\Labwork\KALOFution\KALOFution\DataProvider.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\KALOFution\KALOFution\CorresBuilder.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\KALOFution\KALOFution\main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\ricky%27s work\Labwork\KALOFution\KALOFution\DataProvider.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
